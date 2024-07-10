@@ -2,11 +2,11 @@
 session_start();
 include '../includes/db.php';
 
-// // Pastikan hanya admin yang dapat mengakses halaman ini
-// if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
-//     header('Location: login.php');
-//     exit();
-// }
+// Pastikan hanya admin yang dapat mengakses halaman ini
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+    header('Location: login.php');
+    exit();
+}
 
 // Mengambil ID pesanan dari URL
 $order_id = $_GET['id'];
@@ -18,8 +18,8 @@ $stmt->execute();
 $result = $stmt->get_result();
 $order = $result->fetch_assoc();
 
-// Mengambil detail pesanan dari database
-$stmt = $conn->prepare("SELECT * FROM order_items WHERE order_id = ?");
+// Mengambil detail pesanan dari database dengan nama produk
+$stmt = $conn->prepare("SELECT order_items.*, products.name AS product_name FROM order_items JOIN products ON order_items.product_id = products.id WHERE order_items.order_id = ?");
 $stmt->bind_param("i", $order_id);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -85,7 +85,23 @@ $order_items = $result->fetch_all(MYSQLI_ASSOC);
             padding: 20px;
             height: calc(100vh - 56px); /* Adjust the height to account for the navbar */
         }
-</style>
+        table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+th, td {
+  text-align: left;
+  padding: 8px;
+}
+
+tr:nth-child(even){background-color: #f2f2f2}
+
+th {
+  background-color: #778899;
+  color: white;
+}
+    </style>
 </head>
 <body>
     <!-- Navbar -->
@@ -168,38 +184,47 @@ $order_items = $result->fetch_all(MYSQLI_ASSOC);
             </div>
         </div>
         <div class="content">
-    <h2>Detail Pesanan</h2>
-    <p>ID Pesanan: <?= $order['id'] ?></p>
-    <p>Pengguna: <?= $order['user_id'] ?></p>
-    <p>Alamat: <?= $order['address'] ?></p>
-    <p>Metode Pengiriman: <?= $order['shipping_method'] ?></p>
-    <p>Metode Pembayaran: <?= $order['payment_method'] ?></p>
-    <p>Total: Rp <?= number_format($order['total'], 2, ',', '.') ?></p>
-    <p>Status: <?= $order['status'] ?></p>
-    <h3>Detail Produk</h3>
-    <table border="1">
-        <tr>
-            <th>Nama Produk</th>
-            <th>Harga</th>
-            <th>Jumlah</th>
-            <th>Total</th>
-            <th>File Desain</th>
-        </tr>
-        <?php foreach ($order_items as $item): ?>
-        <tr>
-            <td><?= $item['product_id'] ?></td>
-            <td>Rp <?= number_format($item['price'], 2, ',', '.') ?></td>
-            <td><?= $item['quantity'] ?></td>
-            <td>Rp <?= number_format($item['price'] * $item['quantity'], 2, ',', '.') ?></td>
-            <td>
-                <?php if ($item['design_file']): ?>
-                    <a href="../uploads/designs/<?= $item['design_file'] ?>" download>Unduh Desain</a>
-                <?php endif; ?>
-            </td>
-        </tr>
-        <?php endforeach; ?>
-    </table>
-    <a href="manage_orders.php">Kembali ke Pengelolaan Pesanan</a>
+            <h2>Detail Pesanan</h2>
+            <p>ID Pesanan: <?= htmlspecialchars($order['id']) ?></p>
+            <p>Pengguna: <?= htmlspecialchars($order['user_id']) ?></p>
+            <p>Alamat: <?= htmlspecialchars($order['address']) ?></p>
+            <p>Metode Pengiriman: <?= htmlspecialchars($order['shipping_method']) ?></p>
+            <p>Metode Pembayaran: <?= htmlspecialchars($order['payment_method']) ?></p>
+            <p>Total: Rp <?= number_format($order['total'], 2, ',', '.') ?></p>
+            <p>Status: <?= htmlspecialchars($order['status']) ?></p>
+            <p>Resi : <?= htmlspecialchars($order['tracking_number']); ?></p>
+            <h3>Detail Produk</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Id Produk</th>
+                        <th>Nama Produk</th>
+                        <th>Harga</th>
+                        <th>Jumlah</th>
+                        <th>Total</th>
+                        <th>File Desain</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($order_items as $item): ?>
+                    <tr>
+                        <td><?= $item['product_id'] ?></td>
+                        <td><?= htmlspecialchars($item['product_name']) ?></td>
+                        <td>Rp <?= number_format($item['price'], 2, ',', '.') ?></td>
+                        <td><?= htmlspecialchars($item['quantity']) ?></td>
+                        <td>Rp <?= number_format($item['price'] * $item['quantity'], 2, ',', '.') ?></td>
+                        <td>
+                            <?php if ($item['design_file']): ?>
+                                <a class="btn btn-success" href="../uploads/designs/<?= htmlspecialchars($item['design_file']) ?>" download>Unduh Desain</a>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+            <br>
+            <a class="btn btn-primary" href="manage_orders.php">Kembali ke Pengelolaan Pesanan</a>
+        </div>
     </div>
 </body>
 </html>

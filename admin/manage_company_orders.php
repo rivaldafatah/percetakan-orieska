@@ -8,7 +8,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
 }
 
 // Mengambil data pesanan yang statusnya pending atau in_production
-$stmt = $conn->prepare("SELECT orders.*, users.username FROM orders JOIN users ON orders.user_id = users.id WHERE users.role = 'company' AND (orders.status = 'pending' OR orders.status = 'in_production')");
+$stmt = $conn->prepare("SELECT orders.*, users.username FROM orders JOIN users ON orders.user_id = users.id WHERE users.role = 'company' AND (orders.status = 'pending' OR orders.status = 'production')");
 $stmt->execute();
 $result = $stmt->get_result();
 $orders = $result->fetch_all(MYSQLI_ASSOC);
@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($action === 'produce') {
         // Mengubah status pesanan menjadi produksi
-        $stmt = $conn->prepare("UPDATE orders SET status = 'in_production' WHERE id = ?");
+        $stmt = $conn->prepare("UPDATE orders SET status = 'production' WHERE id = ?");
         $stmt->bind_param("i", $order_id);
         $stmt->execute();
     } elseif ($action === 'ship') {
@@ -209,7 +209,7 @@ th {
                           <input type="hidden" name="order_id" value="<?= $order['id'] ?>">
                           <?php if ($order['status'] === 'pending'): ?>
                               <button type="submit" name="action" value="produce">Mulai Produksi</button>
-                          <?php elseif ($order['status'] === 'in_production'): ?>
+                          <?php elseif ($order['status'] === 'production'): ?>
                               <button class="btn btn-primary" type="submit" name="action" value="ship">Kirim</button>
                           <?php endif; ?>
                       </form>

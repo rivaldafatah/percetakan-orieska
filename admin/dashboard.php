@@ -12,7 +12,7 @@ $stmt->execute();
 $result = $stmt->get_result();
 $total_orders = $result->fetch_assoc()['total_orders'];
 
-$stmt = $conn->prepare("SELECT COUNT(*) AS total_productions FROM orders WHERE status = 'in_production'");
+$stmt = $conn->prepare("SELECT COUNT(*) AS total_productions FROM orders WHERE status = 'production'");
 $stmt->execute();
 $result = $stmt->get_result();
 $total_productions = $result->fetch_assoc()['total_productions'];
