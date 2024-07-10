@@ -2,25 +2,41 @@
 session_start();
 include '../includes/db.php';
 
-// // Pastikan hanya admin yang dapat mengakses halaman ini
+// Pastikan hanya admin yang dapat mengakses halaman ini
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     header('Location: login.php');
     exit();
 }
 
-// Mengambil daftar pengembalian dari database
-$stmt = $conn->prepare("SELECT returns.*, orders.user_id, products.name as product_name FROM returns
-                        JOIN orders ON returns.order_id = orders.id
-                        JOIN products ON returns.product_id = products.id");
+$id = $_GET['id'];
+
+// Mengambil data bahan baku yang akan diedit
+$stmt = $conn->prepare("SELECT * FROM inventory WHERE id = ?");
+$stmt->bind_param("i", $id);
 $stmt->execute();
 $result = $stmt->get_result();
-$returns = $result->fetch_all(MYSQLI_ASSOC);
+$inventory = $result->fetch_assoc();
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $name = $_POST['name'];
+    $description = $_POST['description'];
+    $quantity = $_POST['quantity'];
+
+    $stmt = $conn->prepare("UPDATE inventory SET name = ?, description = ?, quantity = ? WHERE id = ?");
+    if ($stmt === false) {
+        die("Error preparing statement: " . htmlspecialchars($conn->error));
+    }
+    $stmt->bind_param("ssii", $name, $description, $quantity, $id);
+    $stmt->execute();
+    header('Location: manage_inventory.php');
+    exit();
+}
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Pengelolaan Pengembalian - Admin - Percetakan Orieska</title>
+    <title>Edit Stok</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -76,27 +92,11 @@ $returns = $result->fetch_all(MYSQLI_ASSOC);
             padding: 20px;
             height: calc(100vh - 56px); /* Adjust the height to account for the navbar */
         }
-table {
-  border-collapse: collapse;
-  width: 100%;
-}
-
-th, td {
-  text-align: left;
-  padding: 8px;
-}
-
-tr:nth-child(even){background-color: #f2f2f2}
-
-th {
-  background-color: #778899;
-  color: white;
-}
-</style>
+    </style>
 </head>
 <body>
-<!-- Navbar -->
-<nav class="navbar navbar-dark bg-dark">
+    <!-- Navbar -->
+    <nav class="navbar navbar-dark bg-dark">
         <div class="container-fluid">
             <a class="navbar-brand" href="#">Admin Dashboard</a>
             <div class="d-flex">
@@ -174,38 +174,26 @@ th {
                 </ul>
             </div>
         </div>
-    <div class="content">
-    <h2>Pengelolaan Pengembalian</h2>
-    <table>
-        <tr>
-            <th>ID Pengembalian</th>
-            <th>ID Pesanan</th>
-            <th>ID Pengguna</th>
-            <th>Produk</th>
-            <th>Alasan</th>
-            <th>Status</th>
-            <th>Tanggal Dibuat</th>
-            <th>Aksi</th>
-        </tr>
-        <?php foreach ($returns as $return): ?>
-        <tr>
-            <td><?= $return['id'] ?></td>
-            <td><?= $return['order_id'] ?></td>
-            <td><?= $return['user_id'] ?></td>
-            <td><?= $return['product_name'] ?></td>
-            <td><?= $return['reason'] ?></td>
-            <td><?= $return['status'] ?></td>
-            <td><?= $return['created_at'] ?></td>
-            <td>
-                <?php if ($return['status'] === 'pending'): ?>
-                    <a href="process_return.php?id=<?= $return['id'] ?>">Proses</a>
-                <?php else: ?>
-                    Diproses
-                <?php endif; ?>
-            </td>
-        </tr>
-        <?php endforeach; ?>
-    </table>
-    </div>
+        <div class="content">
+            <h2>Edit Bahan Baku</h2>
+            <form method="post" action="edit_inventory.php?id=<?= $id ?>">
+                <div class="mb-3">
+                    <label for="name" class="form-label">Nama Bahan Baku:</label>
+                    <input type="text" class="form-control" id="name" name="name" value="<?= htmlspecialchars($inventory['name']); ?>" required>
+                </div>
+                <div class="mb-3">
+                    <label for="description" class="form-label">Deskripsi:</label>
+                    <textarea class="form-control" id="description" name="description" required><?= htmlspecialchars($inventory['description']); ?></textarea>
+                </div>
+                <div class="mb-3">
+                    <label for="quantity" class="form-label">Jumlah:</label>
+                    <input type="number" class="form-control" id="quantity" name="quantity" value="<?= htmlspecialchars($inventory['quantity']); ?>" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Perbarui Bahan Baku</button>
+            </form>
+        </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

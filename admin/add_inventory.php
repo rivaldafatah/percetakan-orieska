@@ -2,25 +2,33 @@
 session_start();
 include '../includes/db.php';
 
-// // Pastikan hanya admin yang dapat mengakses halaman ini
+// Pastikan hanya admin yang dapat mengakses halaman ini
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     header('Location: login.php');
     exit();
 }
 
-// Mengambil daftar pengembalian dari database
-$stmt = $conn->prepare("SELECT returns.*, orders.user_id, products.name as product_name FROM returns
-                        JOIN orders ON returns.order_id = orders.id
-                        JOIN products ON returns.product_id = products.id");
-$stmt->execute();
-$result = $stmt->get_result();
-$returns = $result->fetch_all(MYSQLI_ASSOC);
+// Menambah bahan baku baru
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_inventory'])) {
+    $name = $_POST['name'];
+    $description = $_POST['description'];
+    $quantity = $_POST['quantity'];
+
+    $stmt = $conn->prepare("INSERT INTO inventory (name, description, quantity) VALUES (?, ?, ?)");
+    if ($stmt === false) {
+        die("Error preparing statement: " . htmlspecialchars($conn->error));
+    }
+    $stmt->bind_param("ssi", $name, $description, $quantity);
+    $stmt->execute();
+    header('Location: manage_inventory.php');
+    exit();
+}
 ?>
 
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Pengelolaan Pengembalian - Admin - Percetakan Orieska</title>
+    <title>Tambah Stok - Admin - Percetakan Orieska</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -76,27 +84,11 @@ $returns = $result->fetch_all(MYSQLI_ASSOC);
             padding: 20px;
             height: calc(100vh - 56px); /* Adjust the height to account for the navbar */
         }
-table {
-  border-collapse: collapse;
-  width: 100%;
-}
-
-th, td {
-  text-align: left;
-  padding: 8px;
-}
-
-tr:nth-child(even){background-color: #f2f2f2}
-
-th {
-  background-color: #778899;
-  color: white;
-}
-</style>
+    </style>
 </head>
 <body>
-<!-- Navbar -->
-<nav class="navbar navbar-dark bg-dark">
+    <!-- Navbar -->
+    <nav class="navbar navbar-dark bg-dark">
         <div class="container-fluid">
             <a class="navbar-brand" href="#">Admin Dashboard</a>
             <div class="d-flex">
@@ -174,38 +166,23 @@ th {
                 </ul>
             </div>
         </div>
-    <div class="content">
-    <h2>Pengelolaan Pengembalian</h2>
-    <table>
-        <tr>
-            <th>ID Pengembalian</th>
-            <th>ID Pesanan</th>
-            <th>ID Pengguna</th>
-            <th>Produk</th>
-            <th>Alasan</th>
-            <th>Status</th>
-            <th>Tanggal Dibuat</th>
-            <th>Aksi</th>
-        </tr>
-        <?php foreach ($returns as $return): ?>
-        <tr>
-            <td><?= $return['id'] ?></td>
-            <td><?= $return['order_id'] ?></td>
-            <td><?= $return['user_id'] ?></td>
-            <td><?= $return['product_name'] ?></td>
-            <td><?= $return['reason'] ?></td>
-            <td><?= $return['status'] ?></td>
-            <td><?= $return['created_at'] ?></td>
-            <td>
-                <?php if ($return['status'] === 'pending'): ?>
-                    <a href="process_return.php?id=<?= $return['id'] ?>">Proses</a>
-                <?php else: ?>
-                    Diproses
-                <?php endif; ?>
-            </td>
-        </tr>
-        <?php endforeach; ?>
-    </table>
+
+        <div class="content">
+        <form method="post" action="add_inventory.php" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label for="name" class="form-label">Nama Bahan Baku:</label>
+                <input type="text" class="form-control" id="name" name="name" required>
+            </div>
+            <div class="mb-3">
+                <label for="description" class="form-label">Deskripsi:</label>
+                <textarea class="form-control" id="description" name="description" required></textarea>
+            </div>
+            <div class="mb-3">
+                <label for="quantity" class="form-label">Jumlah:</label>
+                <input type="number" class="form-control" id="quantity" name="quantity" required>
+            </div>
+            <button type="submit" class="btn btn-primary" name="add_inventory">Tambahkan Bahan Baku</button>
+        </form>
     </div>
 </body>
 </html>

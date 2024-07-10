@@ -126,80 +126,85 @@ $total_products = $result->fetch_assoc()['total_products'];
   </style>
 </head>
 <body>
+  <!-- Navbar -->
   <nav class="navbar navbar-dark bg-dark">
-    <div class="container-fluid">
-      <a class="navbar-brand" href="#">Admin Percetakan Orieska</a>
-      <div class="d-flex">
-        <div class="navbar-text text-white me-3">
-          Logged in as: <strong><?php echo htmlspecialchars($_SESSION['username']); ?></strong>
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">Admin Dashboard</a>
+            <div class="d-flex">
+                <div class="navbar-text text-white me-3">
+                    Logged in as: <strong><?php echo htmlspecialchars($_SESSION['username']); ?></strong>
+                </div>
+                <a class="btn btn-outline-light" href="logout.php">Logout</a>
+            </div>
         </div>
-        <a class="btn btn-outline-light" href="logout.php">Logout</a>
-      </div>
-    </div>
-  </nav>
-  <div class="main-content">
-    <div class="sidebar p-3">
-      <h4>Menu</h4>
-      <ul class="nav flex-column">
-        <li class="nav-item">
-          <a class="nav-link active" aria-current="page" href="dashboard.php">Dashboard</a>
-        </li>
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-            Produk
-          </a>
-          <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-            <li><a class="dropdown-item" href="manage_products.php">List Produk</a></li>
-            <li><a class="dropdown-item" href="add_product.php">Tambah Produk</a></li>
-          </ul>
-        </li>
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-            Manajemen Stok
-          </a>
-          <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-            <li><a class="dropdown-item" href="manage_inventory.php">Stok Bahan</a></li>
-            <li><a class="dropdown-item" href="request_stock.php">Permintaan Bahan Baku</a></li>
-            <li><a class="dropdown-item" href="manage_requests.php">Cetak</a></li>
-          </ul>
-        </li>
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-            Pengeluaran
-          </a>
-          <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-            <li><a class="dropdown-item" href="input_expense.php">Tambah Pengeluaran</a></li>
-            <li><a class="dropdown-item" href="manage_expenses.php">Laporan Pengeluaran</a></li>
-          </ul>
-        </li>
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-            Pesanan Konsumen
-          </a>
-          <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-            <li><a class="dropdown-item" href="manage_orders.php">Konsumen Perorangan</a></li>
-            <li><a class="dropdown-item" href="manage_company_orders.php">Konsumen Perusahaan</a></li>
-          </ul>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="manage_returns.php">Pengembalian</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="company_register.php">Daftar Akun Perusahaan</a>
-        </li>
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-            Kelola Akun Konsumen
-          </a>
-          <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-            <li><a class="dropdown-item" href="manage_accounts.php">Akun Perorangan</a></li>
-            <li><a class="dropdown-item" href="manage_company_accounts.php">Akun Perusahaan</a></li>
-          </ul>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="manage_users.php">Kelola Semua Akun</a>
-  </li>
-    </div>
+    </nav>
+    <div class="main-content">
+        <div class="sidebar">
+            <div class="p-3">
+                <h4>Menu</h4>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="dashboard.php">Dashboard</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Produk
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="manage_products.php">List Produk</a></li>
+                            <li><a class="dropdown-item" href="add_product.php">Tambah Produk</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Manajemen Stok
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="manage_inventory.php">Stok Bahan</a></li>
+                            <li><a class="dropdown-item" href="add_inventory.php">Tambah Bahan Baku</a></li>
+                            <li><a class="dropdown-item" href="request_stock.php">Permintaan Bahan Baku</a></li>
+                            <li><a class="dropdown-item" href="manage_requests.php">Cetak</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Pengeluaran
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="input_expense.php">Tambah Pengeluaran</a></li>
+                            <li><a class="dropdown-item" href="manage_expenses.php">Laporan Pengeluaran</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Pesanan Konsumen
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="manage_orders.php">Konsumen Perorangan</a></li>
+                            <li><a class="dropdown-item" href="manage_company_orders.php">Konsumen Perusahaan</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="manage_returns.php">Pengembalian</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="company_register.php">Daftar Akun Perusahaan</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Kelola Akun Konsumen
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="manage_accounts.php">Akun Perorangan</a></li>
+                            <li><a class="dropdown-item" href="manage_company_accounts.php">Akun Perusahaan</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="manage_users.php">Kelola Semua Akun</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
     <div class="content p-4">
       <h1>Hai <?= htmlspecialchars($_SESSION['username']); ?>, Selamat Datang di Admin Dashboard</h1>
       <p>Kelola Percetakan Disini Yaaaa</p>
