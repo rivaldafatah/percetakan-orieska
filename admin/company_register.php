@@ -178,7 +178,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <label class="form-label">Email:</label>
           <input type="email" class="form-control" name="email" required>
         </div>
-        <button type="submit">Daftar</button>
+        <button type="submit" class="btn btn-primary">Daftar</button>
     </form>
     </div>
 </div>

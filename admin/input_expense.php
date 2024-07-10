@@ -17,9 +17,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt->bind_param("sisd", $material_name, $quantity, $unit, $cost);
     $stmt->execute();
 
-    $stmt = $conn->prepare("UPDATE inventory SET stock = stock + ? WHERE material_name = ?");
-    $stmt->bind_param("is", $quantity, $material_name);
-    $stmt->execute();
+    // $stmt = $conn->prepare("UPDATE inventory SET stock = stock + ? WHERE material_name = ?");
+    // $stmt->bind_param("is", $material_name, $quantity, $unit, $cost);
+    // $stmt->execute();
 
     $success = "Pengeluaran berhasil dicatat dan stok diperbarui.";
 }
@@ -187,7 +187,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               <label class="form-label">Biaya (Rp):</label>
               <input type="number" class="form-control" step="0.01" name="cost" required>
             </div>
-            <button type="submit">Catat Pengeluaran</button>
+            <button type="submit" class="btn btn-primary">Catat Pengeluaran</button>
         </form>
         </div>
     </div>

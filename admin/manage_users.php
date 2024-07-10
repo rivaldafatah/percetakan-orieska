@@ -219,7 +219,7 @@ th {
                     <option value="company">Company</option>
                 </select>
                 </div>
-                <button type="submit">Tambah Pengguna</button>
+                <button type="submit" class="btn btn-primary">Tambah Pengguna</button>
             </form>
           </div>
     </div>

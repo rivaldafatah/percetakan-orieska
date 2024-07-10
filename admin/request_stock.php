@@ -178,7 +178,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               <label class="form-label">Satuan:</label>
               <input type="text" class="form-control" name="unit" required>
             </div>
-            <button type="submit">Buat Permintaan</button>
+            <button type="submit" class="btn btn-primary">Buat Permintaan</button>
         </form>
     </div>
     <div>

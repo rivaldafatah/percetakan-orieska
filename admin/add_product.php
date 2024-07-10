@@ -187,7 +187,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <label class="form-label">Gambar:</label>
             <input type="file" class="form-control" name="image" required>
             </div>
-        <button type="submit" class="btn-btn-success">Tambah Produk</button>
+        <button type="submit" class="btn btn-primary">Tambah Produk</button>
     </form>
     </div>
 </body>

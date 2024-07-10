@@ -209,7 +209,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <img src="../uploads/products/<?= $product['image'] ?>" alt="<?= $product['name'] ?>" width="100">
             <?php endif; ?>
             </div>
-            <button type="submit">Update Produk</button>
+            <button type="submit" class="btn btn-primary">Update Produk</button>
     </form>
     </div>
 </body>
