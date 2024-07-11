@@ -15,6 +15,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $address = $_POST['address'];
     $shipping_method = $_POST['shipping_method'];
     $payment_method = $_POST['payment_method'];
+    $payment_proof = '';
+
+    // Menangani upload gambar bukti pembayaran
+    if (isset($_FILES['payment_proof']) && $_FILES['payment_proof']['error'] == UPLOAD_ERR_OK) {
+        $upload_dir = '../uploads/payment_proofs/';
+        $payment_proof = basename($_FILES['payment_proof']['name']);
+        $target_file = $upload_dir . $payment_proof;
+
+        // Memastikan direktori upload ada
+        if (!is_dir($upload_dir)) {
+            mkdir($upload_dir, 0777, true);
+        }
+
+        // Memindahkan file yang diupload ke direktori target
+        if (!move_uploaded_file($_FILES['payment_proof']['tmp_name'], $target_file)) {
+            die("Error uploading payment proof.");
+        }
+    } else {
+        die("Error: No payment proof uploaded.");
+    }
 
     // Menyimpan data pesanan ke database
     $total = 0;
@@ -22,12 +42,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $total += $item['price'] * $item['quantity'];
     }
 
-    $stmt = $conn->prepare("INSERT INTO orders (user_id, address, shipping_method, payment_method, total, status) VALUES (?, ?, ?, ?, ?, 'pending')");
+    $stmt = $conn->prepare("INSERT INTO orders (user_id, address, shipping_method, payment_method, total, status, payment_proof) VALUES (?, ?, ?, ?, ?, 'pending', ?)");
     if ($stmt === false) {
         die("Error preparing statement: " . htmlspecialchars($conn->error));
     }
     
-    $stmt->bind_param("isssd", $user_id, $address, $shipping_method, $payment_method, $total);
+    $stmt->bind_param("isssds", $user_id, $address, $shipping_method, $payment_method, $total, $payment_proof);
     $stmt->execute();
     $order_id = $stmt->insert_id;
 
@@ -135,7 +155,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <h2 class="text-center">Checkout</h2>
         <div class="card">
             <div class="card-body">
-                <form method="post" action="checkout.php">
+                <form method="post" action="checkout.php" enctype="multipart/form-data">
                     <div class="mb-3">
                         <label for="address" class="form-label">Alamat Pengiriman:</label>
                         <textarea id="address" name="address" class="form-control" required></textarea>
@@ -153,6 +173,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <option value="bri">Transfer Bank BRI (9083242834)</option>
                             <option value="bca">Transfer Bank BCA (98324893248324)</option>
                         </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="payment_proof" class="form-label">Unggah Bukti Pembayaran (jpg, jpeg, png):</label>
+                        <input type="file" id="payment_proof" name="payment_proof" class="form-control" accept="image/jpeg,image/png" required>
                     </div>
                     <button type="submit" class="btn btn-primary">Proses Checkout</button>
                 </form>

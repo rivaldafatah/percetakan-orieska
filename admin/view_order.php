@@ -86,21 +86,24 @@ $order_items = $result->fetch_all(MYSQLI_ASSOC);
             height: calc(100vh - 56px); /* Adjust the height to account for the navbar */
         }
         table {
-  border-collapse: collapse;
-  width: 100%;
-}
-
-th, td {
-  text-align: left;
-  padding: 8px;
-}
-
-tr:nth-child(even){background-color: #f2f2f2}
-
-th {
-  background-color: #778899;
-  color: white;
-}
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            text-align: left;
+            padding: 8px;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        th {
+            background-color: #778899;
+            color: white;
+        }
+        .img-fluid {
+            max-width: 100%;
+            height: 50%;
+        }
     </style>
 </head>
 <body>
@@ -185,16 +188,42 @@ th {
         </div>
         <div class="content">
             <h2>Detail Pesanan</h2>
-            <p>ID Pesanan: <?= htmlspecialchars($order['id']) ?></p>
-            <p>Pengguna: <?= htmlspecialchars($order['user_id']) ?></p>
-            <p>Alamat: <?= htmlspecialchars($order['address']) ?></p>
-            <p>Metode Pengiriman: <?= htmlspecialchars($order['shipping_method']) ?></p>
-            <p>Metode Pembayaran: <?= htmlspecialchars($order['payment_method']) ?></p>
-            <p>Total: Rp <?= number_format($order['total'], 2, ',', '.') ?></p>
-            <p>Status: <?= htmlspecialchars($order['status']) ?></p>
-            <p>Resi : <?= htmlspecialchars($order['tracking_number']); ?></p>
+            <table class="table table-bordered">
+                <tr>
+                    <th>ID Pesanan</th>
+                    <td><?= htmlspecialchars($order['id']) ?></td>
+                </tr>
+                <tr>
+                    <th>Pengguna</th>
+                    <td><?= htmlspecialchars($order['user_id']) ?></td>
+                </tr>
+                <tr>
+                    <th>Alamat</th>
+                    <td><?= htmlspecialchars($order['address']) ?></td>
+                </tr>
+                <tr>
+                    <th>Metode Pengiriman</th>
+                    <td><?= htmlspecialchars($order['shipping_method']) ?></td>
+                </tr>
+                <tr>
+                    <th>Metode Pembayaran</th>
+                    <td><?= htmlspecialchars($order['payment_method']) ?></td>
+                </tr>
+                <tr>
+                    <th>Total</th>
+                    <td>Rp <?= number_format($order['total'], 2, ',', '.') ?></td>
+                </tr>
+                <tr>
+                    <th>Status</th>
+                    <td><?= htmlspecialchars($order['status']) ?></td>
+                </tr>
+                <tr>
+                    <th>Resi</th>
+                    <td><?= htmlspecialchars($order['tracking_number']) ?></td>
+                </tr>
+            </table>
             <h3>Detail Produk</h3>
-            <table>
+            <table class="table table-bordered">
                 <thead>
                     <tr>
                         <th>Id Produk</th>
@@ -203,6 +232,7 @@ th {
                         <th>Jumlah</th>
                         <th>Total</th>
                         <th>File Desain</th>
+                        <th>Bukti Pembayaran</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -216,6 +246,13 @@ th {
                         <td>
                             <?php if ($item['design_file']): ?>
                                 <a class="btn btn-success" href="../uploads/designs/<?= htmlspecialchars($item['design_file']) ?>" download>Unduh Desain</a>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <?php if (!empty($order['payment_proof'])): ?>
+                            <a class="btn btn-warning" href="../uploads/payment_proofs/<?= htmlspecialchars($order['payment_proof']) ?>"  target="_blank">Lihat Gambar</a>
+                            <?php else: ?>
+                            <p>Tidak ada bukti pembayaran yang diunggah.</p>
                             <?php endif; ?>
                         </td>
                     </tr>
