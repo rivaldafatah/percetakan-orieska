@@ -13,7 +13,7 @@ $user_id = $_SESSION['user_id'];
 // Mengambil data pesanan dari database dan mengurutkan berdasarkan order_id dalam urutan menurun
 $stmt = $conn->prepare("SELECT orders.id AS order_id, orders.total, orders.status, 
                         orders.tracking_number, order_items.product_id, order_items.quantity, 
-                        products.name AS product_name, orders.payment_proof
+                        order_items.note, products.name AS product_name, orders.payment_proof
                         FROM orders 
                         JOIN order_items ON orders.id = order_items.order_id
                         JOIN products ON order_items.product_id = products.id
@@ -148,6 +148,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_id'])) {
                         <th>Total Harga</th>
                         <th>Status</th>
                         <th>Nomor Resi</th>
+                        <th>Catatan</th>
                         <th>Bukti Pembayaran</th>
                         <th>Upload Bukti Pembayaran</th>
                     </tr>
@@ -161,9 +162,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_id'])) {
                             <td>Rp <?= number_format($order['total'], 2, ',', '.'); ?></td>
                             <td><?= htmlspecialchars($order['status']); ?></td>
                             <td><?= htmlspecialchars($order['tracking_number']); ?></td>
+                            <td><?= htmlspecialchars($order['note']); ?></td>
                             <td>
                                 <?php if ($order['payment_proof']): ?>
-                                    <a class="btn btn-warning" href="../uploads/payment_proofs/<?= htmlspecialchars($order['payment_proof']); ?>" target="_blank">Lihat Bukti Pembayaran</a>
+                                    <a href="../uploads/payment_proofs/<?= htmlspecialchars($order['payment_proof']); ?>" target="_blank">Lihat Bukti Pembayaran</a>
                                 <?php else: ?>
                                     Belum ada bukti
                                 <?php endif; ?>

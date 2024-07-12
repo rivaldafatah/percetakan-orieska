@@ -2,40 +2,34 @@
 session_start();
 include '../includes/db.php';
 
-// if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
-//     header('Location: login.php');
-//     exit();
-// }
-
-if (isset($_GET['id'])) {
-    $id = $_GET['id'];
-
-    $stmt = $conn->prepare("SELECT id, username, email, role FROM users WHERE id = ?");
-    $stmt->bind_param("i", $id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $user = $result->fetch_assoc();
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'bagian_keuangan') {
+    header('Location: login.php');
+    exit();
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $id = $_POST['id'];
-    $username = $_POST['username'];
-    $email = $_POST['email'];
-    $role = $_POST['role'];
+    $material_name = $_POST['material_name'];
+    $quantity = $_POST['quantity'];
+    $unit = $_POST['unit'];
+    $cost = $_POST['cost'];
 
-    $stmt = $conn->prepare("UPDATE users SET username = ?, email = ?, role = ? WHERE id = ?");
-    $stmt->bind_param("sssi", $username, $email, $role, $id);
+    $stmt = $conn->prepare("INSERT INTO expenses (material_name, quantity, unit, cost) VALUES (?, ?, ?, ?)");
+    $stmt->bind_param("sisd", $material_name, $quantity, $unit, $cost);
     $stmt->execute();
 
-    header('Location: manage_users.php');
-    exit();
+    // $stmt = $conn->prepare("UPDATE inventory SET stock = stock + ? WHERE material_name = ?");
+    // $stmt->bind_param("is", $material_name, $quantity, $unit, $cost);
+    // $stmt->execute();
+
+    $success = "Pengeluaran berhasil dicatat dan stok diperbarui.";
 }
+
 ?>
 
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Edit Pengguna - Admin - Percetakan Orieska</title>
+    <title>Input Pengeluaran Bahan Baku - Admin - Percetakan Orieska</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -91,29 +85,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             padding: 20px;
             height: calc(100vh - 56px); /* Adjust the height to account for the navbar */
         }
-table {
-  border-collapse: collapse;
-  width: 100%;
-}
-
-th, td {
-  text-align: left;
-  padding: 8px;
-}
-
-tr:nth-child(even){background-color: #f2f2f2}
-
-th {
-  background-color: #778899;
-  color: white;
-}
 </style>
 </head>
 <body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-dark bg-dark">
+<!-- Navbar -->
+<nav class="navbar navbar-dark bg-dark">
         <div class="container-fluid">
-            <a class="navbar-brand" href="#">Admin Dashboard</a>
+            <a class="navbar-brand" href="#">Bagian Keuangan Dashboard</a>
             <div class="d-flex">
                 <div class="navbar-text text-white me-3">
                     Logged in as: <strong><?php echo htmlspecialchars($_SESSION['username']); ?></strong>
@@ -132,20 +110,10 @@ th {
                     </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            Produk
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <li><a class="dropdown-item" href="manage_products.php">List Produk</a></li>
-                            <li><a class="dropdown-item" href="add_product.php">Tambah Produk</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             Manajemen Stok
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
                             <li><a class="dropdown-item" href="manage_inventory.php">Stok Bahan</a></li>
-                            <li><a class="dropdown-item" href="add_inventory.php">Tambah Bahan Baku</a></li>
                             <li><a class="dropdown-item" href="request_stock.php">Permintaan Bahan Baku</a></li>
                             <li><a class="dropdown-item" href="manage_requests.php">Cetak</a></li>
                         </ul>
@@ -168,52 +136,32 @@ th {
                             <li><a class="dropdown-item" href="manage_company_orders.php">Konsumen Perusahaan</a></li>
                         </ul>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="manage_returns.php">Pengembalian</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="company_register.php">Daftar Akun Perusahaan</a>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            Kelola Akun Konsumen
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <li><a class="dropdown-item" href="manage_accounts.php">Akun Perorangan</a></li>
-                            <li><a class="dropdown-item" href="manage_company_accounts.php">Akun Perusahaan</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="manage_users.php">Kelola Semua Akun</a>
-                    </li>
                 </ul>
             </div>
         </div>
-        <div class="content">
-    <h2>Edit Pengguna</h2>
-    <div class="container">
-    <form method="post" action="edit_user.php">
-        <div class="mb-3">
-        <input type="hidden" name="id" class="form-control" value="<?= $user['id'] ?>">
-        <label class="form-label">Username:</label>
-        <input type="text" class="form-control" name="username" value="<?= $user['username'] ?>" required>
+    <div class="content">
+    <h2>Input Pengeluaran Bahan Baku</h2>
+    <?php if (isset($success)) { echo "<p>$success</p>"; } ?>
+        <form method="post" action="input_expense.php">
+            <div class="mb-3">
+              <label class="form-label">Nama Bahan:</label>
+              <input type="text" class="form-control" name="material_name" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Jumlah:</label>
+              <input type="number" class="form-control" name="quantity" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Satuan:</label>
+              <input type="text" class="form-control" name="unit" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Biaya (Rp):</label>
+              <input type="number" class="form-control" step="0.01" name="cost" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Catat Pengeluaran</button>
+        </form>
         </div>
-        <div class="mb-3">
-        <label class="form-label">Email:</label>
-        <input type="email" class="form-control" name="email" value="<?= $user['email'] ?>" required>
-        </div>
-        <div class="mb-3">
-        <label class="form-label">Role:</label>
-        <select name="role" class="form-select">
-            <option value="admin" <?= $user['role'] == 'admin' ? 'selected' : '' ?>>Admin</option>
-            <option value="bagian_keuangan" <?= $user['role'] == 'bagian_keuangan' ? 'selected' : '' ?>>Bagian Keuangan</option>
-            <option value="bagian_produksi" <?= $user['role'] == 'bagian_produksi' ? 'selected' : '' ?>>Bagian Produksi</option>
-            <option value="bagian_pengiriman" <?= $user['role'] == 'bagian_pengiriman' ? 'selected' : '' ?>>Bagian Pengiriman</option>
-        </select>
-        </div>
-        <button type="submit" class="btn btn-primary">Update Pengguna</button>
-    </form>
-    </div>
     </div>
 </body>
 </html>

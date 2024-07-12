@@ -50,18 +50,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Menyimpan detail pesanan ke database
     foreach ($cart as $item) {
         $design_file = $item['design_file'];
-        $stmt = $conn->prepare("INSERT INTO order_items (order_id, product_id, quantity, price, design_file) VALUES (?, ?, ?, ?, ?)");
+        $note = isset($item['note']) ? $item['note'] : '';
+        $stmt = $conn->prepare("INSERT INTO order_items (order_id, product_id, quantity, price, design_file, note) VALUES (?, ?, ?, ?, ?, ?)");
         if ($stmt === false) {
             die("Error preparing statement for order items: " . htmlspecialchars($conn->error));
         }
-        $stmt->bind_param("iiids", $order_id, $item['id'], $item['quantity'], $item['price'], $design_file);
+        $stmt->bind_param("iiisss", $order_id, $item['id'], $item['quantity'], $item['price'], $design_file, $note);
         $stmt->execute();
     }
 
     // Mengosongkan keranjang belanja
     unset($_SESSION['cart']);
 
-    header('Location: company_order_success.php');
+    header('Location: order_success.php');
     exit();
 }
 ?>
@@ -140,6 +141,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="register.php">Register</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="logout.php">Logout</a>
                         </li>
                     <?php endif; ?>
                 </ul>

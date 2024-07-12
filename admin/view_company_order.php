@@ -2,40 +2,43 @@
 session_start();
 include '../includes/db.php';
 
-// if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
-//     header('Location: login.php');
-//     exit();
-// }
-
-if (isset($_GET['id'])) {
-    $id = $_GET['id'];
-
-    $stmt = $conn->prepare("SELECT id, username, email, role FROM users WHERE id = ?");
-    $stmt->bind_param("i", $id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $user = $result->fetch_assoc();
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $id = $_POST['id'];
-    $username = $_POST['username'];
-    $email = $_POST['email'];
-    $role = $_POST['role'];
-
-    $stmt = $conn->prepare("UPDATE users SET username = ?, email = ?, role = ? WHERE id = ?");
-    $stmt->bind_param("sssi", $username, $email, $role, $id);
-    $stmt->execute();
-
-    header('Location: manage_users.php');
+// Pastikan hanya admin yang dapat mengakses halaman ini
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+    header('Location: login.php');
     exit();
 }
+
+// Mengambil ID pesanan dari URL
+$order_id = $_GET['id'];
+
+// Mengambil data pesanan dari database
+$stmt = $conn->prepare("SELECT * FROM orders WHERE id = ?");
+$stmt->bind_param("i", $order_id);
+$stmt->execute();
+$result = $stmt->get_result();
+$order = $result->fetch_assoc();
+
+// Mengambil detail pesanan dari database dengan nama produk
+$stmt = $conn->prepare("SELECT order_items.*, products.name AS product_name FROM order_items JOIN products ON order_items.product_id = products.id WHERE order_items.order_id = ?");
+$stmt->bind_param("i", $order_id);
+$stmt->execute();
+$result = $stmt->get_result();
+$order_items = $result->fetch_all(MYSQLI_ASSOC);
+
+// Mengambil catatan pesanan dari detail pesanan (jika ada)
+$notes = [];
+foreach ($order_items as $item) {
+    if (!empty($item['note'])) {
+        $notes[] = $item['note'];
+    }
+}
+$notes = implode(", ", $notes);
 ?>
 
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Edit Pengguna - Admin - Percetakan Orieska</title>
+    <title>Detail Pesanan - Admin - Percetakan Orieska</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -91,23 +94,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             padding: 20px;
             height: calc(100vh - 56px); /* Adjust the height to account for the navbar */
         }
-table {
-  border-collapse: collapse;
-  width: 100%;
-}
-
-th, td {
-  text-align: left;
-  padding: 8px;
-}
-
-tr:nth-child(even){background-color: #f2f2f2}
-
-th {
-  background-color: #778899;
-  color: white;
-}
-</style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            text-align: left;
+            padding: 8px;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        th {
+            background-color: #778899;
+            color: white;
+        }
+        .img-fluid {
+            max-width: 100%;
+            height: 50%;
+        }
+    </style>
 </head>
 <body>
     <!-- Navbar -->
@@ -190,30 +196,81 @@ th {
             </div>
         </div>
         <div class="content">
-    <h2>Edit Pengguna</h2>
-    <div class="container">
-    <form method="post" action="edit_user.php">
-        <div class="mb-3">
-        <input type="hidden" name="id" class="form-control" value="<?= $user['id'] ?>">
-        <label class="form-label">Username:</label>
-        <input type="text" class="form-control" name="username" value="<?= $user['username'] ?>" required>
+            <h2>Detail Pesanan</h2>
+            <table class="table table-bordered">
+                <tr>
+                    <th>ID Pesanan</th>
+                    <td><?= htmlspecialchars($order['id']) ?></td>
+                </tr>
+                <tr>
+                    <th>Pengguna</th>
+                    <td><?= htmlspecialchars($order['user_id']) ?></td>
+                </tr>
+                <tr>
+                    <th>Alamat</th>
+                    <td><?= htmlspecialchars($order['address']) ?></td>
+                </tr>
+                <tr>
+                    <th>Metode Pembayaran</th>
+                    <td><?= htmlspecialchars($order['payment_method']) ?></td>
+                </tr>
+                <tr>
+                    <th>Total</th>
+                    <td>Rp <?= number_format($order['total'], 2, ',', '.') ?></td>
+                </tr>
+                <tr>
+                    <th>Status</th>
+                    <td><?= htmlspecialchars($order['status']) ?></td>
+                </tr>
+                <tr>
+                    <th>Resi</th>
+                    <td><?= htmlspecialchars($order['tracking_number']) ?></td>
+                </tr>
+                <tr>
+                    <th>Catatan</th>
+                    <td><?= htmlspecialchars($notes) ?></td>
+                </tr>
+            </table>
+            <h3>Detail Produk</h3>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Id Produk</th>
+                        <th>Nama Produk</th>
+                        <th>Harga</th>
+                        <th>Jumlah</th>
+                        <th>Total</th>
+                        <th>File Desain</th>
+                        <th>Bukti Pembayaran</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($order_items as $item): ?>
+                    <tr>
+                        <td><?= $item['product_id'] ?></td>
+                        <td><?= htmlspecialchars($item['product_name']) ?></td>
+                        <td>Rp <?= number_format($item['price'], 2, ',', '.') ?></td>
+                        <td><?= htmlspecialchars($item['quantity']) ?></td>
+                        <td>Rp <?= number_format($item['price'] * $item['quantity'], 2, ',', '.') ?></td>
+                        <td>
+                            <?php if ($item['design_file']): ?>
+                                <a class="btn btn-success" href="../uploads/designs/<?= htmlspecialchars($item['design_file']) ?>" download>Unduh Desain</a>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <?php if (!empty($order['payment_proof'])): ?>
+                            <a class="btn btn-warning" href="../uploads/payment_proofs/<?= htmlspecialchars($order['payment_proof']) ?>"  target="_blank">Lihat Gambar</a>
+                            <?php else: ?>
+                            <p>Tidak ada bukti pembayaran yang diunggah.</p>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+            <br>
+            <a class="btn btn-primary" href="manage_company_orders.php">Kembali ke Pengelolaan Pesanan</a>
         </div>
-        <div class="mb-3">
-        <label class="form-label">Email:</label>
-        <input type="email" class="form-control" name="email" value="<?= $user['email'] ?>" required>
-        </div>
-        <div class="mb-3">
-        <label class="form-label">Role:</label>
-        <select name="role" class="form-select">
-            <option value="admin" <?= $user['role'] == 'admin' ? 'selected' : '' ?>>Admin</option>
-            <option value="bagian_keuangan" <?= $user['role'] == 'bagian_keuangan' ? 'selected' : '' ?>>Bagian Keuangan</option>
-            <option value="bagian_produksi" <?= $user['role'] == 'bagian_produksi' ? 'selected' : '' ?>>Bagian Produksi</option>
-            <option value="bagian_pengiriman" <?= $user['role'] == 'bagian_pengiriman' ? 'selected' : '' ?>>Bagian Pengiriman</option>
-        </select>
-        </div>
-        <button type="submit" class="btn btn-primary">Update Pengguna</button>
-    </form>
-    </div>
     </div>
 </body>
 </html>
