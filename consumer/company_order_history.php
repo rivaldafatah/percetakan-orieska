@@ -27,6 +27,41 @@ $orders = [];
 while ($row = $result->fetch_assoc()) {
     $orders[] = $row;
 }
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_id'])) {
+    $order_id = $_POST['order_id'];
+    $payment_proof = '';
+
+    // Menangani upload gambar bukti pembayaran jika ada
+    if (isset($_FILES['payment_proof']) && $_FILES['payment_proof']['error'] == UPLOAD_ERR_OK) {
+        $upload_dir = '../uploads/payment_proofs/';
+        $payment_proof = basename($_FILES['payment_proof']['name']);
+        $target_file = $upload_dir . $payment_proof;
+
+        // Memastikan direktori upload ada
+        if (!is_dir($upload_dir)) {
+            mkdir($upload_dir, 0777, true);
+        }
+
+        // Memindahkan file yang diupload ke direktori target
+        if (!move_uploaded_file($_FILES['payment_proof']['tmp_name'], $target_file)) {
+            die("Error uploading payment proof.");
+        }
+
+        // Memperbarui data pesanan dengan bukti pembayaran
+        $stmt = $conn->prepare("UPDATE orders SET payment_proof = ? WHERE id = ?");
+        if ($stmt === false) {
+            die("Error preparing statement: " . htmlspecialchars($conn->error));
+        }
+        $stmt->bind_param("si", $payment_proof, $order_id);
+        $stmt->execute();
+        
+        header('Location: company_order_history.php');
+        exit();
+    } else {
+        die("Error: No payment proof uploaded.");
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -34,7 +69,7 @@ while ($row = $result->fetch_assoc()) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Riwayat Pesanan - Percetakan Orieska</title>
+    <title>Riwayat Pesanan Perusahaan - Percetakan Orieska</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
@@ -72,7 +107,7 @@ while ($row = $result->fetch_assoc()) {
                 </ul>
                 <ul class="navbar-nav mb-2 mb-lg-0">
                     <li class="nav-item">
-                        <a class="nav-link" href="cart.php"><i class="bi bi-cart"></i> Keranjang</a>
+                        <a class="nav-link" href="company_cart.php"><i class="bi bi-cart"></i> Keranjang</a>
                     </li>
                     <?php if (isset($_SESSION['username'])): ?>
                         <li class="nav-item dropdown">
@@ -100,7 +135,7 @@ while ($row = $result->fetch_assoc()) {
     </nav>
 
     <div class="container mt-5">
-        <h2 class="text-center">Riwayat Pesanan</h2>
+        <h2 class="text-center">Riwayat Pesanan Perusahaan</h2>
         <?php if (empty($orders)): ?>
             <p class="text-center">Tidak ada riwayat pesanan.</p>
         <?php else: ?>
@@ -114,6 +149,7 @@ while ($row = $result->fetch_assoc()) {
                         <th>Status</th>
                         <th>Nomor Resi</th>
                         <th>Bukti Pembayaran</th>
+                        <th>Upload Bukti Pembayaran</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -131,6 +167,15 @@ while ($row = $result->fetch_assoc()) {
                                 <?php else: ?>
                                     Belum ada bukti
                                 <?php endif; ?>
+                            </td>
+                            <td>
+                                <form method="post" action="company_order_history.php" enctype="multipart/form-data">
+                                    <input type="hidden" name="order_id" value="<?= htmlspecialchars($order['order_id']); ?>">
+                                    <div class="mb-3">
+                                        <input type="file" name="payment_proof" class="form-control" accept="image/jpeg,image/png" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">Unggah</button>
+                                </form>
                             </td>
                         </tr>
                     <?php endforeach; ?>

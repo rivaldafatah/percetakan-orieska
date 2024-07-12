@@ -2,20 +2,27 @@
 session_start();
 include '../includes/db.php';
 
-// Mengambil data produk dari database
-$stmt = $conn->prepare("SELECT * FROM products WHERE company = 0");
-$stmt->execute();
-$result = $stmt->get_result();
-$products = $result->fetch_all(MYSQLI_ASSOC);
+// Pastikan pengguna sudah login
+if (!isset($_SESSION['user_id'])) {
+    header('Location: login.php');
+    exit();
+}
+
+$cart = isset($_SESSION['cart']) ? $_SESSION['cart'] : [];
+$total = 0;
+
+foreach ($cart as $item) {
+    $total += $item['price'] * $item['quantity'];
+}
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
   <!-- Required meta tags -->
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Percetakan Orieska</title>
+  <title>Keranjang</title>
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <!-- Bootstrap Icons -->
@@ -24,19 +31,6 @@ $products = $result->fetch_all(MYSQLI_ASSOC);
   <link href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" rel="stylesheet">
   <!-- Custom CSS -->
   <link href="https://stackpath.bootstrapcdn.com/bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    .card-img-top {
-      height: 200px; /* Sesuaikan tinggi gambar sesuai kebutuhan */
-      object-fit: cover;
-    }
-    .card-body {
-      height: 150px; /* Sesuaikan tinggi tubuh kartu sesuai kebutuhan */
-      overflow: hidden;
-    }
-    .card-title, .card-text {
-      margin-bottom: 10px;
-    }
-  </style>
 </head>
 <body>
     <!-- Navbar -->
@@ -55,7 +49,7 @@ $products = $result->fetch_all(MYSQLI_ASSOC);
                         <a class="nav-link" href="#">Layanan Vendor</a>
                     </li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link active dropdown-toggle" href="#" id="katalogDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <a class="nav-link dropdown-toggle" href="#" id="katalogDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             Katalog
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="katalogDropdown">
@@ -64,7 +58,6 @@ $products = $result->fetch_all(MYSQLI_ASSOC);
                             <li><a class="dropdown-item" href="#">Plakat</a></li>
                             <li><a class="dropdown-item" href="#">Stiker</a></li>
                             <li><a class="dropdown-item" href="#">Kartu Nama</a></li>
-                            <li><a class="dropdown-item" href="#">Buku</a></li>
                         </ul>
                     </li>
                     <li class="nav-item">
@@ -73,13 +66,13 @@ $products = $result->fetch_all(MYSQLI_ASSOC);
                 </ul>
                 <ul class="navbar-nav mb-2 mb-lg-0">
                     <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="bi bi-cart"></i> Keranjang</a>
+                        <a class="nav-link" href="company_cart.php"><i class="bi bi-cart"></i> Keranjang</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="login.php">Login</a>
+                        <a class="nav-link" href="company_login.php">Login</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="register.php">Register</a>
+                        <a class="nav-link" href="company_register.php">Register</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="logout.php">Logout</a>
@@ -89,25 +82,47 @@ $products = $result->fetch_all(MYSQLI_ASSOC);
         </div>
     </nav>
 
-    <div class="container mt-5">
-        <h2>Katalog Produk</h2>
-        <div class="row">
-            <?php foreach ($products as $product): ?>
-                <div class="col-md-4">
-                    <div class="card mb-4">
-                        <img src="../uploads/products/<?= $product['image'] ?>" class="card-img-top" alt="<?= $product['name'] ?>">
-                        <div class="card-body">
-                            <h5 class="card-title"><?= $product['name'] ?></h5>
-                            <p class="card-text">Rp <?= number_format($product['price'], 2, ',', '.') ?></p>
-                            <a href="product_detail.php?id=<?= $product['id'] ?>" class="btn btn-primary">Lihat Detail</a>
-                        </div>
-                    </div>
-                </div>
-            <?php endforeach; ?>
-        </div>
+<div class="container mt-5">
+        <h2>Keranjang Belanja Perusahaan</h2>
+        <?php if (empty($cart)): ?>
+            <div class="alert alert-warning" role="alert">
+                Keranjang belanja Anda kosong.
+            </div>
+        <?php else: ?>
+            <table class="table table-bordered">
+                <thead class="thead-dark">
+                    <tr>
+                        <th>Nama Produk</th>
+                        <th>Harga</th>
+                        <th>Jumlah</th>
+                        <th>Total</th>
+                        <th>Catatan</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($cart as $item): ?>
+                        <tr>
+                            <td><?= htmlspecialchars($item['name']) ?></td>
+                            <td>Rp <?= number_format($item['price'], 2, ',', '.') ?></td>
+                            <td><?= htmlspecialchars($item['quantity']) ?></td>
+                            <td>Rp <?= number_format($item['price'] * $item['quantity'], 2, ',', '.') ?></td>
+                            <td><?= isset($item['note']) ? htmlspecialchars($item['note']) : '' ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                    <tr>
+                        <td colspan="4" class="text-end"><strong>Total</strong></td>
+                        <td>Rp <?= number_format($total, 2, ',', '.') ?></td>
+                    </tr>
+                </tbody>
+            </table>
+                <a href="company_catalog.php" class="btn btn-primary">Lanjut Belanja</a>
+                <a href="company_checkout.php" class="btn btn-success">Checkout</a>
+            </div>
+        <?php endif; ?>
     </div>
 
     <!-- Bootstrap JS and dependencies -->
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
 </body>
 </html>
