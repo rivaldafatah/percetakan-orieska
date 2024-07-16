@@ -2,6 +2,11 @@
 session_start();
 include '../includes/db.php';
 
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'individual') {
+    header('Location: login.php');
+    exit();
+}
+
 // Mengambil data produk dari database
 $stmt = $conn->prepare("SELECT * FROM products WHERE company = 0");
 $stmt->execute();
@@ -55,7 +60,7 @@ $products = $result->fetch_all(MYSQLI_ASSOC);
                         <a class="nav-link" href="#">Layanan Vendor</a>
                     </li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link active dropdown-toggle" href="#" id="katalogDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <a class="nav-link dropdown-toggle" href="#" id="katalogDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             Katalog
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="katalogDropdown">
@@ -64,7 +69,6 @@ $products = $result->fetch_all(MYSQLI_ASSOC);
                             <li><a class="dropdown-item" href="#">Plakat</a></li>
                             <li><a class="dropdown-item" href="#">Stiker</a></li>
                             <li><a class="dropdown-item" href="#">Kartu Nama</a></li>
-                            <li><a class="dropdown-item" href="#">Buku</a></li>
                         </ul>
                     </li>
                     <li class="nav-item">
@@ -73,17 +77,25 @@ $products = $result->fetch_all(MYSQLI_ASSOC);
                 </ul>
                 <ul class="navbar-nav mb-2 mb-lg-0">
                     <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="bi bi-cart"></i> Keranjang</a>
+                        <a class="nav-link" href="cart.php"><i class="bi bi-cart"></i> Keranjang</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="login.php">Login</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="register.php">Register</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="logout.php">Logout</a>
-                    </li>
+                    <?php if (isset($_SESSION['username'])): ?>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <?= htmlspecialchars($_SESSION['username']); ?>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                <li><a class="dropdown-item" href="logout.php">Logout</a></li>
+                            </ul>
+                        </li>
+                    <?php else: ?>
+                        <li class="nav-item">
+                            <a class="nav-link" href="login.php">Login</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="register.php">Register</a>
+                        </li>
+                    <?php endif; ?>
                 </ul>
             </div>
         </div>

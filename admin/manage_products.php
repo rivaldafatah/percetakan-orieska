@@ -182,6 +182,7 @@ $products = $result->fetch_all(MYSQLI_ASSOC);
                     <th>Deskripsi</th>
                     <th>Harga</th>
                     <th>Gambar</th>
+                    <th>Estimasi Pengerjaan</th>
                     <th>Aksi</th>
                 </tr>
                 <?php foreach ($products as $product): ?>
@@ -191,6 +192,7 @@ $products = $result->fetch_all(MYSQLI_ASSOC);
                     <td><?= $product['description'] ?></td>
                     <td>Rp <?= number_format($product['price'], 2, ',', '.') ?></td>
                     <td><img src="../uploads/products/<?= $product['image'] ?>" alt="<?= $product['name'] ?>" width="50"></td>
+                    <td><?= $product['estimasi_pengerjaan'] ?></td>
                     <td>
                         <a class="btn btn-success" href="edit_product.php?id=<?= $product['id'] ?>" role="button">Edit</a>
                         <a class="btn btn-danger" href="delete_product.php?id=<?= $product['id'] ?>" onclick="return confirm('Anda yakin ingin menghapus produk ini?')" role="button">Hapus</a>

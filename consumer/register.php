@@ -67,8 +67,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   </style>
 </head>
 <body>
-    <?php if (isset($error)) { echo "<p>$error</p>"; } ?>
-    <?php if ($success) { echo "<script>showAlert('$success');</script>"; } ?>
     <div class="bg-image">
     <div class="container">
       <div class="row justify-content-center">
@@ -76,6 +74,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <div class="form-container">
             <h2 class="mb-4 text-center">Daftar</h2>
             <form method="post" action="register.php">
+              <?php if (isset($error)) { echo "<p>$error</p>"; } ?>
+              <?php if ($success) { echo "<script>showAlert('$success');</script>"; } ?>
               <div class="mb-3">
                 <label for="username" class="form-label">Username</label>
                 <input type="text" class="form-control" name="username" placeholder="Masukan Username" required>

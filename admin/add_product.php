@@ -12,14 +12,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = $_POST['name'];
     $description = $_POST['description'];
     $price = $_POST['price'];
+    $estimasi_pengerjaan = $_POST['estimasi_pengerjaan'];
+    $min_order = $_POST['min_order'];
     $image = $_FILES['image']['name'];
 
     $target_dir = "../uploads/products/";
     $target_file = $target_dir . basename($image);
     move_uploaded_file($_FILES['image']['tmp_name'], $target_file);
 
-    $stmt = $conn->prepare("INSERT INTO products (name, description, price, image) VALUES (?, ?, ?, ?)");
-    $stmt->bind_param("ssds", $name, $description, $price, $image);
+    $stmt = $conn->prepare("INSERT INTO products (name, description, price, estimasi_pengerjaan, min_order, image) VALUES (?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("ssdiss", $name, $description, $price, $estimasi_pengerjaan, $min_order, $image);
     $stmt->execute();
 
     header('Location: manage_products.php');
@@ -86,7 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             padding: 20px;
             height: calc(100vh - 56px); /* Adjust the height to account for the navbar */
         }
-</style>
+    </style>
 </head>
 <body>
 <!-- Navbar -->
@@ -182,6 +184,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="mb-3">
                 <label class="form-label">Harga:</label>
                 <input type="number" class="form-control" step="0.01" name="price" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Estimasi Pengerjaan:</label>
+                <input type="text" class="form-control" name="estimasi_pengerjaan" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Minimum Order:</label>
+                <input type="number" class="form-control" name="min_order" required>
             </div>
             <div class="mb-3">
             <label class="form-label">Gambar:</label>

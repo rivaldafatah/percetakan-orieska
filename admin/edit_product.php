@@ -2,11 +2,11 @@
 session_start();
 include '../includes/db.php';
 
-// // Pastikan hanya admin yang dapat mengakses halaman ini
-// if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
-//     header('Location: login.php');
-//     exit();
-// }
+// Pastikan hanya admin yang dapat mengakses halaman ini
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+    header('Location: login.php');
+    exit();
+}
 
 // Mengambil data produk berdasarkan ID yang diberikan
 if (isset($_GET['id'])) {
@@ -25,6 +25,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = $_POST['name'];
     $description = $_POST['description'];
     $price = $_POST['price'];
+    $estimasi_pengerjaan = $_POST['estimasi_pengerjaan'];
+    $min_order = $_POST['min_order'];
     $image = $_FILES['image']['name'];
 
     if ($image) {
@@ -35,8 +37,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $image = $product['image'];
     }
 
-    $stmt = $conn->prepare("UPDATE products SET name = ?, description = ?, price = ?, image = ? WHERE id = ?");
-    $stmt->bind_param("ssdsi", $name, $description, $price, $image, $id);
+    $stmt = $conn->prepare("UPDATE products SET name = ?, description = ?, price = ?, estimasi_pengerjaan = ?, min_order = ?, image = ? WHERE id = ?");
+    $stmt->bind_param("ssdsisi", $name, $description, $price, $estimasi_pengerjaan, $min_order, $image, $id);
     $stmt->execute();
 
     header('Location: manage_products.php');
@@ -103,7 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             padding: 20px;
             height: calc(100vh - 56px); /* Adjust the height to account for the navbar */
         }
-</style>
+    </style>
 </head>
 <body>
 <!-- Navbar -->
@@ -201,6 +203,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="mb-3">
                 <label class="form-label">Harga:</label>
                 <input type="number" step="0.01" name="price" class="form-control" value="<?= $product['price'] ?>" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Estimasi Pengerjaan:</label>
+                <input type="text" class="form-control" name="estimasi_pengerjaan" value="<?= $product['estimasi_pengerjaan'] ?>" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Minimum Order:</label>
+                <input type="number" class="form-control" name="min_order" value="<?= $product['min_order'] ?>" required>
             </div>
             <div class="mb-3">
                 <label class="form-label">Gambar:</label>
