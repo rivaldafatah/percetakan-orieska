@@ -139,43 +139,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </nav>
 
     <div class="container mt-5">
-        <h2 class="text-center">Detail Produk</h2>
-        <div class="row justify-content-center">
-            <div class="card product-card">
-                <div class="row g-0">
-                    <div class="col-md-6">
-                        <img src="../uploads/products/<?= $product['image'] ?>" class="img-fluid rounded-start" alt="<?= $product['name'] ?>">
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card-body">
-                            <h3 class="card-title"><?= $product['name'] ?></h3>
-                            <p class="price card-text">Rp <?= number_format($product['price'], 2, ',', '.') ?></p>
-                            <p class="description card-text"><?= $product['description'] ?></p>
-                            <form method="post" action="company_product_detail.php?id=<?= $product['id'] ?>" enctype="multipart/form-data">
-                                <div class="mb-3">
-                                    <label for="quantity" class="form-label">Jumlah:</label>
-                                    <input type="number" id="quantity" name="quantity" class="form-control" value="1" min="1" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="note" class="form-label">Catatan:</label>
-                                    <textarea id="note" name="note" class="form-control"></textarea>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="design_file" class="form-label">Unggah File Desain (PDF):</label>
-                                    <input type="file" id="design_file" name="design_file" class="form-control" accept=".jpg,.jpeg,.png,.pdf" required>
-                                </div>
-                                <button type="submit" class="btn btn-primary">Tambahkan ke Keranjang</button>
-                            </form>
-                            <a href="company_catalog.php" class="btn btn-secondary mt-3">Kembali ke Katalog</a>
-                        </div>
+    <h2 class="text-center">Detail Produk</h2>
+    <?php if (isset($_SESSION['error'])): ?>
+        <div class="alert alert-danger">
+            <?= $_SESSION['error'] ?>
+            <?php unset($_SESSION['error']); ?>
+        </div>
+    <?php endif; ?>
+    <div class="row justify-content-center">
+        <div class="card product-card">
+            <div class="row g-0">
+                <div class="col-md-6">
+                    <img src="../uploads/products/<?= $product['image'] ?>" class="img-fluid rounded-start" alt="<?= $product['name'] ?>">
+                </div>
+                <div class="col-md-6">
+                    <div class="card-body">
+                        <h3 class="card-title"><?= $product['name'] ?></h3>
+                        <p class="price card-text">Rp <?= number_format($product['price'], 2, ',', '.') ?></p>
+                        <p class="description card-text"><?= $product['description'] ?></p>
+                        <p class="card-text"><strong>Estimasi Pengerjaan: </strong><?= htmlspecialchars($product['estimasi_pengerjaan']) ?></p>
+                        <form method="post" action="product_detail.php?id=<?= $product['id'] ?>" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <label for="quantity" class="form-label">Jumlah (minimum order <?= $product['min_order'] ?>):</label>
+                                <input type="number" id="quantity" name="quantity" class="form-control" value="<?= $product['min_order'] ?>" min="<?= $product['min_order'] ?>" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="design_file" class="form-label">Unggah File Desain Max 20 MB (JPG, JPEG, PNG, PDF, CDR, PSD, RAR):</label>
+                                <input type="file" id="design_file" name="design_file" class="form-control" accept=".jpg, .jpeg, .png, .pdf, .cdr, .psd, .rar" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Tambahkan ke Keranjang</button>
+                        </form>
+                        <a href="catalog.php" class="btn btn-secondary mt-3">Kembali ke Katalog</a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
+</div>
 <!-- Bootstrap JS and dependencies -->
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
+
+<!-- Custom JavaScript to handle quantity input -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var quantityInput = document.getElementById('quantity');
+    var minOrder = <?= $product['min_order'] ?>;
+
+    quantityInput.addEventListener('input', function() {
+        if (quantityInput.value < minOrder) {
+            quantityInput.value = minOrder;
+        }
+    });
+});
+
 </body>
 </html>
