@@ -27,6 +27,7 @@ $orders = [];
 while ($row = $result->fetch_assoc()) {
     $orders[] = $row;
 }
+
 ?>
 
 <!DOCTYPE html>
@@ -114,6 +115,7 @@ while ($row = $result->fetch_assoc()) {
                         <th>Status</th>
                         <th>Nomor Resi</th>
                         <th>Bukti Pembayaran</th>
+                        <th>Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -130,6 +132,20 @@ while ($row = $result->fetch_assoc()) {
                                     <a class="btn btn-warning" href="../uploads/payment_proofs/<?= htmlspecialchars($order['payment_proof']); ?>" target="_blank">Lihat Bukti Pembayaran</a>
                                 <?php else: ?>
                                     Belum ada bukti
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <?php if ($order['status'] === 'shipped'): ?>
+                                    <a class="btn btn-success" href="complete_order.php?order_id=<?= $order['order_id'] ?>">Pesanan Selesai</a>
+                                    <a class="btn btn-danger" href="return_request.php?order_id=<?= $order['order_id'] ?>">Ajukan Retur</a>
+                                <?php elseif ($order['status'] === 'return_pending'): ?>
+                                    <span class="badge bg-warning text-dark">Retur Pending</span>
+                                <?php elseif ($order['status'] === 'return_rejected'): ?>
+                                    <span class="badge bg-danger">Retur Ditolak</span>
+                                <?php elseif ($order['status'] === 'return_accepted'): ?>
+                                    <span class="badge bg-success">Retur Diterima</span>
+                                <?php elseif ($order['status'] === 'completed'): ?>
+                                    <span class="badge bg-success">Selesai</span>
                                 <?php endif; ?>
                             </td>
                         </tr>

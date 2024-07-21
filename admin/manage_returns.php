@@ -2,16 +2,44 @@
 session_start();
 include '../includes/db.php';
 
-// // Pastikan hanya admin yang dapat mengakses halaman ini
+// Pastikan hanya admin yang dapat mengakses halaman ini
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     header('Location: login.php');
     exit();
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $return_id = $_POST['return_id'];
+    $action = $_POST['action'];
+
+    if ($action === 'accept') {
+        $stmt = $conn->prepare("UPDATE returns SET status = 'accepted' WHERE id = ?");
+        $stmt->bind_param("i", $return_id);
+        $stmt->execute();
+
+        // Update status pesanan di konsumen menjadi 'return_accepted'
+        $stmt = $conn->prepare("UPDATE orders SET status = 'return_accepted' WHERE id = (SELECT order_id FROM returns WHERE id = ?)");
+        $stmt->bind_param("i", $return_id);
+        $stmt->execute();
+    } elseif ($action === 'reject') {
+        $stmt = $conn->prepare("UPDATE returns SET status = 'rejected' WHERE id = ?");
+        $stmt->bind_param("i", $return_id);
+        $stmt->execute();
+
+        // Update status pesanan di konsumen menjadi 'return_rejected'
+        $stmt = $conn->prepare("UPDATE orders SET status = 'return_rejected' WHERE id = (SELECT order_id FROM returns WHERE id = ?)");
+        $stmt->bind_param("i", $return_id);
+        $stmt->execute();
+    }
+
+    header('Location: manage_returns.php');
+    exit();
+}
+
 // Mengambil daftar pengembalian dari database
-$stmt = $conn->prepare("SELECT returns.*, orders.user_id, products.name as product_name FROM returns
-                        JOIN orders ON returns.order_id = orders.id
-                        JOIN products ON returns.product_id = products.id");
+$stmt = $conn->prepare("SELECT returns.*, orders.user_id, users.username FROM returns 
+                        JOIN orders ON returns.order_id = orders.id 
+                        JOIN users ON orders.user_id = users.id");
 $stmt->execute();
 $result = $stmt->get_result();
 $returns = $result->fetch_all(MYSQLI_ASSOC);
@@ -20,7 +48,7 @@ $returns = $result->fetch_all(MYSQLI_ASSOC);
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Pengelolaan Pengembalian - Admin - Percetakan Orieska</title>
+    <title>Manajemen Pengembalian - Admin - Percetakan Orieska</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -76,7 +104,7 @@ $returns = $result->fetch_all(MYSQLI_ASSOC);
             padding: 20px;
             height: calc(100vh - 56px); /* Adjust the height to account for the navbar */
         }
-table {
+        table {
   border-collapse: collapse;
   width: 100%;
 }
@@ -92,11 +120,11 @@ th {
   background-color: #778899;
   color: white;
 }
-</style>
+    </style>
 </head>
 <body>
-<!-- Navbar -->
-<nav class="navbar navbar-dark bg-dark">
+    <!-- Navbar -->
+    <nav class="navbar navbar-dark bg-dark">
         <div class="container-fluid">
             <a class="navbar-brand" href="#">Admin Dashboard</a>
             <div class="d-flex">
@@ -174,38 +202,58 @@ th {
                 </ul>
             </div>
         </div>
-    <div class="content">
-    <h2>Pengelolaan Pengembalian</h2>
-    <table>
-        <tr>
-            <th>ID Pengembalian</th>
-            <th>ID Pesanan</th>
-            <th>ID Pengguna</th>
-            <th>Produk</th>
-            <th>Alasan</th>
-            <th>Status</th>
-            <th>Tanggal Dibuat</th>
-            <th>Aksi</th>
-        </tr>
-        <?php foreach ($returns as $return): ?>
-        <tr>
-            <td><?= $return['id'] ?></td>
-            <td><?= $return['order_id'] ?></td>
-            <td><?= $return['user_id'] ?></td>
-            <td><?= $return['product_name'] ?></td>
-            <td><?= $return['reason'] ?></td>
-            <td><?= $return['status'] ?></td>
-            <td><?= $return['created_at'] ?></td>
-            <td>
-                <?php if ($return['status'] === 'pending'): ?>
-                    <a href="process_return.php?id=<?= $return['id'] ?>">Proses</a>
-                <?php else: ?>
-                    Diproses
-                <?php endif; ?>
-            </td>
-        </tr>
-        <?php endforeach; ?>
-    </table>
+        <div class="content">
+            <h2>Pengelolaan Pengembalian</h2>
+            <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>ID Retur</th>
+                    <th>Order ID</th>
+                    <th>Username</th>
+                    <th>Alasan</th>
+                    <th>Bukti Gambar</th>
+                    <th>Status</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($returns as $return): ?>
+                    <tr>
+                        <td><?= htmlspecialchars($return['id']); ?></td>
+                        <td><?= htmlspecialchars($return['order_id']); ?></td>
+                        <td><?= htmlspecialchars($return['username']); ?></td>
+                        <td><?= htmlspecialchars($return['reason']); ?></td>
+                        <td>
+                            <?php if ($return['proof_image']): ?>
+                                <a class="btn btn-warning" href="../uploads/returns/<?= htmlspecialchars($return['proof_image']); ?>" target="_blank">Lihat Bukti</a>
+                            <?php else: ?>
+                                Tidak ada bukti
+                            <?php endif; ?>
+                        </td>
+                        <td><?= htmlspecialchars($return['status']); ?></td>
+                        <td>
+                            <?php if ($return['status'] === 'pending'): ?>
+                                <form method="post" action="manage_returns.php" style="display:inline;">
+                                    <input type="hidden" name="return_id" value="<?= $return['id']; ?>">
+                                    <input type="hidden" name="action" value="accept">
+                                    <button type="submit" class="btn btn-success">Terima</button>
+                                </form>
+                                <form method="post" action="manage_returns.php" style="display:inline;">
+                                    <input type="hidden" name="return_id" value="<?= $return['id']; ?>">
+                                    <input type="hidden" name="action" value="reject">
+                                    <button type="submit" class="btn btn-danger">Tolak</button>
+                                </form>
+                            <?php elseif ($return['status'] === 'accepted'): ?>
+                                <span class="badge bg-success">Diterima</span>
+                            <?php elseif ($return['status'] === 'rejected'): ?>
+                                <span class="badge bg-danger">Ditolak</span>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+        </div>
     </div>
 </body>
 </html>

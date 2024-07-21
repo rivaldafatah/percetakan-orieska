@@ -165,7 +165,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_id'])) {
                             <td><?= htmlspecialchars($order['note']); ?></td>
                             <td>
                                 <?php if ($order['payment_proof']): ?>
-                                    <a href="../uploads/payment_proofs/<?= htmlspecialchars($order['payment_proof']); ?>" target="_blank">Lihat Bukti Pembayaran</a>
+                                    <a class="btn btn-warning" href="../uploads/payment_proofs/<?= htmlspecialchars($order['payment_proof']); ?>" target="_blank">Lihat Bukti Pembayaran</a>
                                 <?php else: ?>
                                     Belum ada bukti
                                 <?php endif; ?>

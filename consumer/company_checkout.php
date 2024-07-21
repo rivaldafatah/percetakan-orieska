@@ -62,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Mengosongkan keranjang belanja
     unset($_SESSION['cart']);
 
-    header('Location: order_success.php');
+    header('Location: company_order_success.php');
     exit();
 }
 ?>
