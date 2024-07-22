@@ -13,12 +13,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'];
 
     if ($action === 'accept') {
-        $stmt = $conn->prepare("UPDATE returns SET status = 'accepted' WHERE id = ?");
+        $stmt = $conn->prepare("UPDATE returns SET status = 'approved' WHERE id = ?");
         $stmt->bind_param("i", $return_id);
         $stmt->execute();
 
         // Update status pesanan di konsumen menjadi 'return_accepted'
-        $stmt = $conn->prepare("UPDATE orders SET status = 'return_accepted' WHERE id = (SELECT order_id FROM returns WHERE id = ?)");
+        $stmt = $conn->prepare("UPDATE orders SET status = 'return_approved' WHERE id = (SELECT order_id FROM returns WHERE id = ?)");
         $stmt->bind_param("i", $return_id);
         $stmt->execute();
     } elseif ($action === 'reject') {
@@ -43,6 +43,12 @@ $stmt = $conn->prepare("SELECT returns.*, orders.user_id, users.username FROM re
 $stmt->execute();
 $result = $stmt->get_result();
 $returns = $result->fetch_all(MYSQLI_ASSOC);
+
+// Mengambil daftar pesanan dari konsumen perorangan dari database dan mengurutkannya berdasarkan id pesanan dalam urutan menurun
+$stmt = $conn->prepare("SELECT orders.*, users.username FROM orders JOIN users ON orders.user_id = users.id WHERE users.role = 'individual' ORDER BY orders.id DESC");
+$stmt->execute();
+$result = $stmt->get_result();
+$orders = $result->fetch_all(MYSQLI_ASSOC);
 ?>
 
 <!DOCTYPE html>
@@ -210,8 +216,8 @@ th {
                     <th>ID Retur</th>
                     <th>Order ID</th>
                     <th>Username</th>
-                    <th>Alasan</th>
-                    <th>Bukti Gambar</th>
+                    <th><center>Alasan<center></th>
+                    <th><center>Bukti Retur<center></th>
                     <th>Status</th>
                     <th>Aksi</th>
                 </tr>
@@ -223,12 +229,13 @@ th {
                         <td><?= htmlspecialchars($return['order_id']); ?></td>
                         <td><?= htmlspecialchars($return['username']); ?></td>
                         <td><?= htmlspecialchars($return['reason']); ?></td>
-                        <td>
+                        <td><center>
                             <?php if ($return['proof_image']): ?>
-                                <a class="btn btn-warning" href="../uploads/returns/<?= htmlspecialchars($return['proof_image']); ?>" target="_blank">Lihat Bukti</a>
+                                <a class="btn btn-warning btn-sm" href="../uploads/returns/<?= htmlspecialchars($return['proof_image']); ?>" target="_blank">Lihat Bukti</a>
                             <?php else: ?>
                                 Tidak ada bukti
                             <?php endif; ?>
+                            <a class="btn btn-primary btn-sm" href="view_order.php?id=<?= htmlspecialchars($return['order_id']); ?>" role="button">Lihat Detail</a></center>
                         </td>
                         <td><?= htmlspecialchars($return['status']); ?></td>
                         <td>
@@ -243,7 +250,7 @@ th {
                                     <input type="hidden" name="action" value="reject">
                                     <button type="submit" class="btn btn-danger">Tolak</button>
                                 </form>
-                            <?php elseif ($return['status'] === 'accepted'): ?>
+                            <?php elseif ($return['status'] === 'approved'): ?>
                                 <span class="badge bg-success">Diterima</span>
                             <?php elseif ($return['status'] === 'rejected'): ?>
                                 <span class="badge bg-danger">Ditolak</span>
