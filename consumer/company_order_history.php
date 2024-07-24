@@ -151,6 +151,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_id'])) {
                         <th>Catatan</th>
                         <th>Bukti Pembayaran</th>
                         <th>Upload Bukti Pembayaran</th>
+                        <th>Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -165,7 +166,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_id'])) {
                             <td><?= htmlspecialchars($order['note']); ?></td>
                             <td>
                                 <?php if ($order['payment_proof']): ?>
-                                    <a class="btn btn-warning" href="../uploads/payment_proofs/<?= htmlspecialchars($order['payment_proof']); ?>" target="_blank">Lihat Bukti Pembayaran</a>
+                                    <a class="btn btn-warning btn-sm" href="../uploads/payment_proofs/<?= htmlspecialchars($order['payment_proof']); ?>" target="_blank">Lihat Bukti Pembayaran</a>
                                 <?php else: ?>
                                     Belum ada bukti
                                 <?php endif; ?>
@@ -178,6 +179,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_id'])) {
                                     </div>
                                     <button type="submit" class="btn btn-primary">Unggah</button>
                                 </form>
+                            </td>
+                            <td>
+                                <?php if ($order['status'] === 'shipped'): ?>
+                                    <a class="btn btn-success btn-sm" href="complete_order.php?order_id=<?= $order['order_id'] ?>">Pesanan Selesai</a>
+                                    <a class="btn btn-danger btn-sm" href="return_request.php?order_id=<?= $order['order_id'] ?>">Ajukan Retur</a>
+                                <?php elseif ($order['status'] === 'return_pending'): ?>
+                                    <span class="badge bg-warning text-dark">Retur Pending</span>
+                                <?php elseif ($order['status'] === 'return_rejected'): ?>
+                                    <span class="badge bg-danger">Retur Ditolak</span>
+                                <?php elseif ($order['status'] === 'return_accepted'): ?>
+                                    <span class="badge bg-success">Retur Diterima</span>
+                                <?php elseif ($order['status'] === 'completed'): ?>
+                                    <span class="badge bg-success">Selesai</span>
+                                <?php endif; ?>
                             </td>
                         </tr>
                     <?php endforeach; ?>
