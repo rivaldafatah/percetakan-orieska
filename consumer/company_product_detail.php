@@ -64,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'name' => $product['name'],
         'price' => $product['price'],
         'quantity' => $quantity,
-        'design_file' => $design_file,
+        'design_file' => basename($design_file['name']),
         'note' => $note
     ];
 

@@ -100,8 +100,9 @@ if (!$request) {
                         <tr>
                             <td>
                                 Percetakan Orieska<br>
-                                Jalan Percetakan No. 123<br>
-                                Bandung, Indonesia
+                                Jalan Cilisung Kp. Coblong Rt 3/ Rw 14 <br> 
+                                Ds. Sukamenak, Kec. Margahayu, <br>
+                                Kab. Bandung
                             </td>
                             <td>
                                 Supplier<br>

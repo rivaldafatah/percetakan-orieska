@@ -149,9 +149,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_id'])) {
                         <th>Status</th>
                         <th>Nomor Resi</th>
                         <th>Catatan</th>
-                        <th>Bukti Pembayaran</th>
                         <th>Upload Bukti Pembayaran</th>
-                        <th>Aksi</th>
+                        <th><center>Aksi</center></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -164,13 +163,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_id'])) {
                             <td><?= htmlspecialchars($order['status']); ?></td>
                             <td><?= htmlspecialchars($order['tracking_number']); ?></td>
                             <td><?= htmlspecialchars($order['note']); ?></td>
-                            <td>
-                                <?php if ($order['payment_proof']): ?>
-                                    <a class="btn btn-warning btn-sm" href="../uploads/payment_proofs/<?= htmlspecialchars($order['payment_proof']); ?>" target="_blank">Lihat Bukti Pembayaran</a>
-                                <?php else: ?>
-                                    Belum ada bukti
-                                <?php endif; ?>
-                            </td>
+                            
                             <td>
                                 <form method="post" action="company_order_history.php" enctype="multipart/form-data">
                                     <input type="hidden" name="order_id" value="<?= htmlspecialchars($order['order_id']); ?>">
@@ -181,6 +174,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_id'])) {
                                 </form>
                             </td>
                             <td>
+                            <a class="btn btn-info btn-sm" href="view_company_order_detail.php?order_id=<?= $order['order_id'] ?>">Lihat Detail</a>
                                 <?php if ($order['status'] === 'shipped'): ?>
                                     <a class="btn btn-success btn-sm" href="complete_order.php?order_id=<?= $order['order_id'] ?>">Pesanan Selesai</a>
                                     <a class="btn btn-danger btn-sm" href="return_request.php?order_id=<?= $order['order_id'] ?>">Ajukan Retur</a>
