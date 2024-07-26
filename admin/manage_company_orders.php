@@ -190,10 +190,12 @@ $orders = $result->fetch_all(MYSQLI_ASSOC);
                     <td>Rp <?= number_format($order['total'], 2, ',', '.') ?></td>
                     <td><?= $order['status'] ?></td>
                     <td>
-                        <a class="btn btn-primary" href="view_company_order.php?id=<?= $order['id'] ?>" role="button">Lihat Detail</a>
-                        <a class="btn btn-warning" href="update_status.php?id=<?= $order['id'] ?>&status=production" role="button">Update Status Produksi</a>
-                        <a class="btn btn-info" href="update_status.php?id=<?= $order['id'] ?>&status=shipped" role="button">Update Status Kirim</a>
-                        <a class="btn btn-success" href="update_status.php?id=<?= $order['id'] ?>&status=completed" role="button">Update Status Selesai</a>
+                        <a class="btn btn-primary btn-sm" href="view_company_order.php?id=<?= $order['id'] ?>" role="button">Lihat Detail</a>
+                        <a class="btn btn-secondary btn-sm" href="update_status.php?id=<?= $order['id'] ?>&status=approved" role="button">Update Status Setujui</a>
+                        <a class="btn btn-dark btn-sm" href="update_status.php?id=<?= $order['id'] ?>&status=proofing" role="button">Update Status Proofing</a>
+                        <a class="btn btn-warning btn-sm" href="update_status.php?id=<?= $order['id'] ?>&status=production" role="button">Update Status Produksi</a>
+                        <a class="btn btn-info btn-sm" href="update_status.php?id=<?= $order['id'] ?>&status=shipped" role="button">Update Status Kirim</a>
+                        <a class="btn btn-success btn-sm" href="update_status.php?id=<?= $order['id'] ?>&status=completed" role="button">Update Status Selesai</a>
                     </td>
                 </tr>
                 <?php endforeach; ?>

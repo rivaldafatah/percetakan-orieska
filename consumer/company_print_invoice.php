@@ -117,6 +117,10 @@ $order_items = $result->fetch_all(MYSQLI_ASSOC);
                                 Status: 
                                 <?php if ($order['status'] === 'pending'): ?>
                                     <span class="badge bg-warning">Pending</span>
+                                <?php elseif ($order['status'] === 'approved'): ?>
+                                    <span class="badge bg-secondary">Order Disetujui</span>
+                                <?php elseif ($order['status'] === 'proofing'): ?>
+                                    <span class="badge bg-dark">Desain Di Proofing</span>
                                 <?php elseif ($order['status'] === 'production'): ?>
                                     <span class="badge bg-primary">Dalam Produksi</span>
                                 <?php elseif ($order['status'] === 'shipped'): ?>

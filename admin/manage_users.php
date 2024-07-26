@@ -9,7 +9,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
 }
 
 // Mengambil daftar pengguna dari database
-$stmt = $conn->prepare("SELECT id, username, email, role, created_at FROM users WHERE role IN ('admin', 'bagian_keuangan', 'bagian_produksi', 'bagian_pengiriman')");
+$stmt = $conn->prepare("SELECT id, username, email, role, created_at FROM users WHERE role IN ('admin', 'bagian_keuangan', 'bagian_produksi', 'bagian_pengiriman', 'bagian_praproduksi', 'pemilik')");
 $stmt->execute();
 $result = $stmt->get_result();
 $users = $result->fetch_all(MYSQLI_ASSOC);
@@ -215,9 +215,11 @@ th {
                 <label class="form-label">Role:</label>
                 <select class="form-select" name="role">
                     <option value="admin">Admin</option>
+                    <option value="pemilik">Pemilik</option>
                     <option value="bagian_keuangan">Bagian Keuangan</option>
                     <option value="bagian_produksi">Bagian Produksi</option>
                     <option value="bagian_Pengiriman">Bagian Pengiriman</option>
+                    <option value="bagian_praproduksi">Bagian Pra Produksi</option>
                 </select>
                 </div>
                 <button type="submit" class="btn btn-primary">Tambah Pengguna</button>

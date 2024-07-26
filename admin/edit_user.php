@@ -206,9 +206,11 @@ th {
         <label class="form-label">Role:</label>
         <select name="role" class="form-select">
             <option value="admin" <?= $user['role'] == 'admin' ? 'selected' : '' ?>>Admin</option>
+            <option value="pemilik" <?= $user['role'] == 'pemilik' ? 'selected' : '' ?>>Pemilik</option>
             <option value="bagian_keuangan" <?= $user['role'] == 'bagian_keuangan' ? 'selected' : '' ?>>Bagian Keuangan</option>
             <option value="bagian_produksi" <?= $user['role'] == 'bagian_produksi' ? 'selected' : '' ?>>Bagian Produksi</option>
             <option value="bagian_pengiriman" <?= $user['role'] == 'bagian_pengiriman' ? 'selected' : '' ?>>Bagian Pengiriman</option>
+            <option value="bagian_praproduksi" <?= $user['role'] == 'bagian_praproduksi' ? 'selected' : '' ?>>Bagian Pra Produksi</option>
         </select>
         </div>
         <button type="submit" class="btn btn-primary">Update Pengguna</button>
