@@ -3,12 +3,25 @@ session_start();
 include '../includes/db.php';
 
 // Pastikan hanya admin yang dapat mengakses halaman ini
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'pemilik') {
     header('Location: login.php');
     exit();
 }
 
+// Mengambil data produk berdasarkan ID yang diberikan
+if (isset($_GET['id'])) {
+    $id = $_GET['id'];
+
+    $stmt = $conn->prepare("SELECT * FROM products WHERE id = ?");
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $product = $result->fetch_assoc();
+}
+
+// Proses pengeditan produk
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $id = $_POST['id'];
     $name = $_POST['name'];
     $description = $_POST['description'];
     $price = $_POST['price'];
@@ -16,12 +29,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $min_order = $_POST['min_order'];
     $image = $_FILES['image']['name'];
 
-    $target_dir = "../uploads/products/";
-    $target_file = $target_dir . basename($image);
-    move_uploaded_file($_FILES['image']['tmp_name'], $target_file);
+    if ($image) {
+        $target_dir = "../uploads/products/";
+        $target_file = $target_dir . basename($image);
+        move_uploaded_file($_FILES['image']['tmp_name'], $target_file);
+    } else {
+        $image = $product['image'];
+    }
 
-    $stmt = $conn->prepare("INSERT INTO products (name, description, price, estimasi_pengerjaan, min_order, image) VALUES (?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("ssdsss", $name, $description, $price, $estimasi_pengerjaan, $min_order, $image);
+    $stmt = $conn->prepare("UPDATE products SET name = ?, description = ?, price = ?, estimasi_pengerjaan = ?, min_order = ?, image = ? WHERE id = ?");
+    $stmt->bind_param("ssdsisi", $name, $description, $price, $estimasi_pengerjaan, $min_order, $image, $id);
     $stmt->execute();
 
     header('Location: manage_products.php');
@@ -32,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Tambah Produk - Admin - Percetakan Orieska</title>
+    <title>Edit Produk - Admin - Percetakan Orieska</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -91,10 +108,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </style>
 </head>
 <body>
-<!-- Navbar -->
-<nav class="navbar navbar-dark bg-dark">
+ <!-- Navbar -->
+ <nav class="navbar navbar-dark bg-dark">
         <div class="container-fluid">
-            <a class="navbar-brand" href="#">Admin Dashboard</a>
+            <a class="navbar-brand" href="#">Pemilik Dashboard</a>
             <div class="d-flex">
                 <div class="navbar-text text-white me-3">
                     Logged in as: <strong><?php echo htmlspecialchars($_SESSION['username']); ?></strong>
@@ -126,8 +143,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
                             <li><a class="dropdown-item" href="manage_inventory.php">Stok Bahan</a></li>
-                            <li><a class="dropdown-item" href="add_inventory.php">Tambah Bahan Baku</a></li>
-                            <li><a class="dropdown-item" href="request_stock.php">Permintaan Bahan Baku</a></li>
                             <li><a class="dropdown-item" href="manage_requests.php">Cetak</a></li>
                         </ul>
                     </li>
@@ -136,7 +151,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             Pengeluaran
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <li><a class="dropdown-item" href="input_expense.php">Tambah Pengeluaran</a></li>
                             <li><a class="dropdown-item" href="manage_expenses.php">Laporan Pengeluaran</a></li>
                         </ul>
                     </li>
@@ -152,52 +166,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <li class="nav-item">
                         <a class="nav-link" href="manage_returns.php">Pengembalian</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="company_register.php">Daftar Akun Perusahaan</a>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            Kelola Akun Konsumen
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <li><a class="dropdown-item" href="manage_accounts.php">Akun Perorangan</a></li>
-                            <li><a class="dropdown-item" href="manage_company_accounts.php">Akun Perusahaan</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="manage_users.php">Kelola Semua Akun</a>
-                    </li>
                 </ul>
             </div>
         </div>
         <div class="content">
-        <h2>Tambah Produk Baru</h2>
-        <form method="post" action="add_product.php" enctype="multipart/form-data">
+        <h2>Edit Produk</h2>
+        <div class="container">
+        <form method="post" action="edit_product.php" enctype="multipart/form-data">
             <div class="mb-3">
+                <input type="hidden" class="form-control" name="id" value="<?= $product['id'] ?>">
                 <label class="form-label">Nama Produk:</label>
-                <input type="text" class="form-control" name="name" required>
+                <input type="text" class="form-control" name="name" value="<?= $product['name'] ?>" required>
             </div>
             <div class="mb-3">
                 <label class="form-label">Deskripsi:</label>
-                <textarea class="form-control" rows="3" name="description" required></textarea>
+                <textarea name="description" class="form-control" required><?= $product['description'] ?></textarea>
             </div>
             <div class="mb-3">
                 <label class="form-label">Harga:</label>
-                <input type="number" class="form-control" step="0.01" name="price" required>
+                <input type="number" step="0.01" name="price" class="form-control" value="<?= $product['price'] ?>" required>
             </div>
             <div class="mb-3">
                 <label class="form-label">Estimasi Pengerjaan:</label>
-                <input type="text" class="form-control" name="estimasi_pengerjaan" required>
+                <input type="text" class="form-control" name="estimasi_pengerjaan" value="<?= $product['estimasi_pengerjaan'] ?>" required>
             </div>
             <div class="mb-3">
                 <label class="form-label">Minimum Order:</label>
-                <input type="number" class="form-control" name="min_order" required>
+                <input type="number" class="form-control" name="min_order" value="<?= $product['min_order'] ?>" required>
             </div>
             <div class="mb-3">
-            <label class="form-label">Gambar:</label>
-            <input type="file" class="form-control" name="image" required>
+                <label class="form-label">Gambar:</label>
+                <input type="file" name="image" class="form-control">
+            <?php if ($product['image']): ?>
+                <img src="../uploads/products/<?= $product['image'] ?>" alt="<?= $product['name'] ?>" width="100">
+            <?php endif; ?>
             </div>
-        <button type="submit" class="btn btn-primary">Tambah Produk</button>
+            <button type="submit" class="btn btn-primary">Update Produk</button>
     </form>
     </div>
 </body>

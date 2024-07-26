@@ -3,36 +3,42 @@ session_start();
 include '../includes/db.php';
 
 // Pastikan hanya admin yang dapat mengakses halaman ini
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'pemilik') {
     header('Location: login.php');
     exit();
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = $_POST['name'];
-    $description = $_POST['description'];
-    $price = $_POST['price'];
-    $estimasi_pengerjaan = $_POST['estimasi_pengerjaan'];
-    $min_order = $_POST['min_order'];
-    $image = $_FILES['image']['name'];
+// Mengambil ID pesanan dari URL
+$order_id = $_GET['id'];
 
-    $target_dir = "../uploads/products/";
-    $target_file = $target_dir . basename($image);
-    move_uploaded_file($_FILES['image']['tmp_name'], $target_file);
+// Mengambil data pesanan dari database
+$stmt = $conn->prepare("SELECT * FROM orders WHERE id = ?");
+$stmt->bind_param("i", $order_id);
+$stmt->execute();
+$result = $stmt->get_result();
+$order = $result->fetch_assoc();
 
-    $stmt = $conn->prepare("INSERT INTO products (name, description, price, estimasi_pengerjaan, min_order, image) VALUES (?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("ssdsss", $name, $description, $price, $estimasi_pengerjaan, $min_order, $image);
-    $stmt->execute();
+// Mengambil detail pesanan dari database dengan nama produk
+$stmt = $conn->prepare("SELECT order_items.*, products.name AS product_name FROM order_items JOIN products ON order_items.product_id = products.id WHERE order_items.order_id = ?");
+$stmt->bind_param("i", $order_id);
+$stmt->execute();
+$result = $stmt->get_result();
+$order_items = $result->fetch_all(MYSQLI_ASSOC);
 
-    header('Location: manage_products.php');
-    exit();
+// Mengambil catatan pesanan dari detail pesanan (jika ada)
+$notes = [];
+foreach ($order_items as $item) {
+    if (!empty($item['note'])) {
+        $notes[] = $item['note'];
+    }
 }
+$notes = implode(", ", $notes);
 ?>
 
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Tambah Produk - Admin - Percetakan Orieska</title>
+    <title>Detail Pesanan - Admin - Percetakan Orieska</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -88,13 +94,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             padding: 20px;
             height: calc(100vh - 56px); /* Adjust the height to account for the navbar */
         }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            text-align: left;
+            padding: 8px;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        th {
+            background-color: #778899;
+            color: white;
+        }
+        .img-fluid {
+            max-width: 100%;
+            height: 50%;
+        }
     </style>
 </head>
 <body>
-<!-- Navbar -->
+    <!-- Navbar -->
 <nav class="navbar navbar-dark bg-dark">
         <div class="container-fluid">
-            <a class="navbar-brand" href="#">Admin Dashboard</a>
+            <a class="navbar-brand" href="#">Pemilik Dashboard</a>
             <div class="d-flex">
                 <div class="navbar-text text-white me-3">
                     Logged in as: <strong><?php echo htmlspecialchars($_SESSION['username']); ?></strong>
@@ -126,8 +151,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
                             <li><a class="dropdown-item" href="manage_inventory.php">Stok Bahan</a></li>
-                            <li><a class="dropdown-item" href="add_inventory.php">Tambah Bahan Baku</a></li>
-                            <li><a class="dropdown-item" href="request_stock.php">Permintaan Bahan Baku</a></li>
                             <li><a class="dropdown-item" href="manage_requests.php">Cetak</a></li>
                         </ul>
                     </li>
@@ -136,7 +159,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             Pengeluaran
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <li><a class="dropdown-item" href="input_expense.php">Tambah Pengeluaran</a></li>
                             <li><a class="dropdown-item" href="manage_expenses.php">Laporan Pengeluaran</a></li>
                         </ul>
                     </li>
@@ -152,53 +174,85 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <li class="nav-item">
                         <a class="nav-link" href="manage_returns.php">Pengembalian</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="company_register.php">Daftar Akun Perusahaan</a>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            Kelola Akun Konsumen
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <li><a class="dropdown-item" href="manage_accounts.php">Akun Perorangan</a></li>
-                            <li><a class="dropdown-item" href="manage_company_accounts.php">Akun Perusahaan</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="manage_users.php">Kelola Semua Akun</a>
-                    </li>
                 </ul>
             </div>
         </div>
         <div class="content">
-        <h2>Tambah Produk Baru</h2>
-        <form method="post" action="add_product.php" enctype="multipart/form-data">
-            <div class="mb-3">
-                <label class="form-label">Nama Produk:</label>
-                <input type="text" class="form-control" name="name" required>
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Deskripsi:</label>
-                <textarea class="form-control" rows="3" name="description" required></textarea>
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Harga:</label>
-                <input type="number" class="form-control" step="0.01" name="price" required>
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Estimasi Pengerjaan:</label>
-                <input type="text" class="form-control" name="estimasi_pengerjaan" required>
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Minimum Order:</label>
-                <input type="number" class="form-control" name="min_order" required>
-            </div>
-            <div class="mb-3">
-            <label class="form-label">Gambar:</label>
-            <input type="file" class="form-control" name="image" required>
-            </div>
-        <button type="submit" class="btn btn-primary">Tambah Produk</button>
-    </form>
+            <h2>Detail Pesanan</h2>
+            <table class="table table-bordered">
+                <tr>
+                    <th>ID Pesanan</th>
+                    <td><?= htmlspecialchars($order['id']) ?></td>
+                </tr>
+                <tr>
+                    <th>Pengguna</th>
+                    <td><?= htmlspecialchars($order['user_id']) ?></td>
+                </tr>
+                <tr>
+                    <th>Alamat</th>
+                    <td><?= htmlspecialchars($order['address']) ?></td>
+                </tr>
+                <tr>
+                    <th>Metode Pembayaran</th>
+                    <td><?= htmlspecialchars($order['payment_method']) ?></td>
+                </tr>
+                <tr>
+                    <th>Total</th>
+                    <td>Rp <?= number_format($order['total'], 2, ',', '.') ?></td>
+                </tr>
+                <tr>
+                    <th>Status</th>
+                    <td><?= htmlspecialchars($order['status']) ?></td>
+                </tr>
+                <tr>
+                    <th>Resi</th>
+                    <td><?= htmlspecialchars($order['tracking_number']) ?></td>
+                </tr>
+                <tr>
+                    <th>Catatan</th>
+                    <td><?= htmlspecialchars($notes) ?></td>
+                </tr>
+            </table>
+            <h3>Detail Produk</h3>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Id Produk</th>
+                        <th>Nama Produk</th>
+                        <th>Harga</th>
+                        <th>Jumlah</th>
+                        <th>Total</th>
+                        <th>File Desain</th>
+                        <th>Bukti Pembayaran</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($order_items as $item): ?>
+                    <tr>
+                        <td><?= $item['product_id'] ?></td>
+                        <td><?= htmlspecialchars($item['product_name']) ?></td>
+                        <td>Rp <?= number_format($item['price'], 2, ',', '.') ?></td>
+                        <td><?= htmlspecialchars($item['quantity']) ?></td>
+                        <td>Rp <?= number_format($item['price'] * $item['quantity'], 2, ',', '.') ?></td>
+                        <td>
+                            <?php if ($item['design_file']): ?>
+                                <a class="btn btn-success" href="../uploads/designs/<?= htmlspecialchars($item['design_file']) ?>" download>Unduh Desain</a>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <?php if (!empty($order['payment_proof'])): ?>
+                            <a class="btn btn-warning" href="../uploads/payment_proofs/<?= htmlspecialchars($order['payment_proof']) ?>"  target="_blank">Lihat Gambar</a>
+                            <?php else: ?>
+                            <p>Tidak ada bukti pembayaran yang diunggah.</p>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+            <br>
+            <a class="btn btn-primary" href="manage_company_orders.php">Kembali ke Pengelolaan Pesanan</a>
+        </div>
     </div>
 </body>
 </html>

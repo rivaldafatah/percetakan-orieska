@@ -3,36 +3,22 @@ session_start();
 include '../includes/db.php';
 
 // Pastikan hanya admin yang dapat mengakses halaman ini
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'pemilik') {
     header('Location: login.php');
     exit();
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = $_POST['name'];
-    $description = $_POST['description'];
-    $price = $_POST['price'];
-    $estimasi_pengerjaan = $_POST['estimasi_pengerjaan'];
-    $min_order = $_POST['min_order'];
-    $image = $_FILES['image']['name'];
-
-    $target_dir = "../uploads/products/";
-    $target_file = $target_dir . basename($image);
-    move_uploaded_file($_FILES['image']['tmp_name'], $target_file);
-
-    $stmt = $conn->prepare("INSERT INTO products (name, description, price, estimasi_pengerjaan, min_order, image) VALUES (?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("ssdsss", $name, $description, $price, $estimasi_pengerjaan, $min_order, $image);
-    $stmt->execute();
-
-    header('Location: manage_products.php');
-    exit();
-}
+// Mengambil daftar pesanan dari konsumen perorangan dari database dan mengurutkannya berdasarkan id pesanan dalam urutan menurun
+$stmt = $conn->prepare("SELECT orders.*, users.username FROM orders JOIN users ON orders.user_id = users.id WHERE users.role = 'company' ORDER BY orders.id DESC");
+$stmt->execute();
+$result = $stmt->get_result();
+$orders = $result->fetch_all(MYSQLI_ASSOC);
 ?>
 
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Tambah Produk - Admin - Percetakan Orieska</title>
+    <title>Pengelolaan Pesanan - Admin - Percetakan Orieska</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -88,13 +74,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             padding: 20px;
             height: calc(100vh - 56px); /* Adjust the height to account for the navbar */
         }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            text-align: left;
+            padding: 8px;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        th {
+            background-color: #778899;
+            color: white;
+        }
     </style>
 </head>
 <body>
 <!-- Navbar -->
 <nav class="navbar navbar-dark bg-dark">
         <div class="container-fluid">
-            <a class="navbar-brand" href="#">Admin Dashboard</a>
+            <a class="navbar-brand" href="#">Pemilik Dashboard</a>
             <div class="d-flex">
                 <div class="navbar-text text-white me-3">
                     Logged in as: <strong><?php echo htmlspecialchars($_SESSION['username']); ?></strong>
@@ -126,8 +127,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
                             <li><a class="dropdown-item" href="manage_inventory.php">Stok Bahan</a></li>
-                            <li><a class="dropdown-item" href="add_inventory.php">Tambah Bahan Baku</a></li>
-                            <li><a class="dropdown-item" href="request_stock.php">Permintaan Bahan Baku</a></li>
                             <li><a class="dropdown-item" href="manage_requests.php">Cetak</a></li>
                         </ul>
                     </li>
@@ -136,7 +135,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             Pengeluaran
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <li><a class="dropdown-item" href="input_expense.php">Tambah Pengeluaran</a></li>
                             <li><a class="dropdown-item" href="manage_expenses.php">Laporan Pengeluaran</a></li>
                         </ul>
                     </li>
@@ -152,53 +150,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <li class="nav-item">
                         <a class="nav-link" href="manage_returns.php">Pengembalian</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="company_register.php">Daftar Akun Perusahaan</a>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            Kelola Akun Konsumen
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <li><a class="dropdown-item" href="manage_accounts.php">Akun Perorangan</a></li>
-                            <li><a class="dropdown-item" href="manage_company_accounts.php">Akun Perusahaan</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="manage_users.php">Kelola Semua Akun</a>
-                    </li>
                 </ul>
             </div>
         </div>
-        <div class="content">
-        <h2>Tambah Produk Baru</h2>
-        <form method="post" action="add_product.php" enctype="multipart/form-data">
-            <div class="mb-3">
-                <label class="form-label">Nama Produk:</label>
-                <input type="text" class="form-control" name="name" required>
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Deskripsi:</label>
-                <textarea class="form-control" rows="3" name="description" required></textarea>
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Harga:</label>
-                <input type="number" class="form-control" step="0.01" name="price" required>
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Estimasi Pengerjaan:</label>
-                <input type="text" class="form-control" name="estimasi_pengerjaan" required>
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Minimum Order:</label>
-                <input type="number" class="form-control" name="min_order" required>
-            </div>
-            <div class="mb-3">
-            <label class="form-label">Gambar:</label>
-            <input type="file" class="form-control" name="image" required>
-            </div>
-        <button type="submit" class="btn btn-primary">Tambah Produk</button>
-    </form>
-    </div>
+    <div class="content">
+        <h2>Pengelolaan Pesanan Konsumen Perorangan</h2>
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Pengguna</th>
+                <th>Metode Pembayaran</th>
+                <th>Total</th>
+                <th>Status</th>
+                <th>Aksi</th>
+            </tr>
+            <?php foreach ($orders as $order): ?>
+                <tr>
+                    <td><?= $order['id'] ?></td>
+                    <td><?= $order['username'] ?></td>
+                    <td><?= $order['payment_method'] ?></td>
+                    <td>Rp <?= number_format($order['total'], 2, ',', '.') ?></td>
+                    <td><?= $order['status'] ?></td>
+                    <td>
+                        <a class="btn btn-primary btn-sm" href="view_company_order.php?id=<?= $order['id'] ?>" role="button">Lihat Detail</a>
+                        <a class="btn btn-secondary btn-sm" href="update_status.php?id=<?= $order['id'] ?>&status=approved" role="button">Update Status Setujui</a>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+            </table>
+        </div>
 </body>
 </html>

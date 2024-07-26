@@ -38,7 +38,8 @@
     <p class="mb-4">Selamat datang di portal administrator Percetakan Orieska. Silakan pilih login sesuai dengan peran Anda:</p>
     <div class="d-grid gap-2">
       <button class="btn btn-primary" onclick="location.href='admin/login.php'">Login sebagai Admin</button>
-      <button class="btn btn-secondary" onclick="location.href='owner/login.php'">Login sebagai Owner</button>
+      <button class="btn btn-secondary" onclick="location.href='pemilik/login.php'">Login sebagai Pemilik</button>
+      <button class="btn btn-dark" onclick="location.href='bagian_praproduksi/login.php'">Login sebagai Bagian Pra Produksi</button>
       <button class="btn btn-success" onclick="location.href='bagian_keuangan/login.php'">Login sebagai Bagian Keuangan</button>
       <button class="btn btn-warning" onclick="location.href='bagian_produksi/login.php'">Login sebagai Bagian Produksi</button>
       <button class="btn btn-info" onclick="location.href='bagian_pengiriman/login.php'">Login sebagai Bagian Pengiriman</button>

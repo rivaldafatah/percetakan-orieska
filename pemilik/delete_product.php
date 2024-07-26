@@ -3,7 +3,7 @@ session_start();
 include '../includes/db.php';
 
 // Pastikan hanya admin yang dapat mengakses halaman ini
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'pemilik') {
     header('Location: login.php');
     exit();
 }
