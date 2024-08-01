@@ -26,11 +26,7 @@ if ($new_status == 'approved') {
     header("Location: manage_orders.php");
     exit();
 } elseif ($new_status == 'proofing') {
-    // Perbarui Status ke setujui pesanan
-    $stmt = $conn->prepare("UPDATE orders SET status = 'proofing' WHERE id = ?");
-    $stmt->bind_param("i", $order_id);
-    $stmt->execute();
-    header("Location: manage_orders.php");
+    header("Location: upload_proofing_design.php?id=$order_id");
     exit();
 } elseif ($new_status == 'production') {
     // Arahkan ke halaman input bahan

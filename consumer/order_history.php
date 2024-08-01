@@ -126,7 +126,7 @@ while ($row = $result->fetch_assoc()) {
                             <td><?= htmlspecialchars($order['status']); ?></td>
                             <td><?= htmlspecialchars($order['tracking_number']); ?></td>
                             <td>
-                                <a class="btn btn-info btn-sm" href="view_order_detail.php?order_id=<?= $order['order_id'] ?>">Lihat Detail</a>
+                                <a class="btn btn-info btn-sm" href="view_order_detail.php?id=<?= $order['order_id'] ?>">Lihat Detail</a>
                                 <?php if ($order['status'] === 'shipped'): ?>
                                     <a class="btn btn-success btn-sm" href="complete_order.php?order_id=<?= $order['order_id'] ?>">Pesanan Selesai</a>
                                     <a class="btn btn-danger btn-sm" href="return_request.php?order_id=<?= $order['order_id'] ?>">Ajukan Retur</a>

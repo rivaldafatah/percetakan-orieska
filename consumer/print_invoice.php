@@ -119,6 +119,8 @@ $order_items = $result->fetch_all(MYSQLI_ASSOC);
                                     <span class="badge bg-warning">Pending</span>
                                 <?php elseif ($order['status'] === 'approved'): ?>
                                     <span class="badge bg-secondary">Order Disetujui</span>
+                                <?php elseif ($order['status'] === 'rejected'): ?>
+                                    <span class="badge bg-danger">Order Ditolak</span>
                                 <?php elseif ($order['status'] === 'proofing'): ?>
                                     <span class="badge bg-dark">Desain Di Proofing</span>
                                 <?php elseif ($order['status'] === 'production'): ?>

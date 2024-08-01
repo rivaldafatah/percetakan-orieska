@@ -8,17 +8,38 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     exit();
 }
 
-// Mengambil daftar pesanan dari konsumen perorangan dari database dan mengurutkannya berdasarkan id pesanan dalam urutan menurun
-$stmt = $conn->prepare("SELECT orders.*, users.username FROM orders JOIN users ON orders.user_id = users.id WHERE users.role = 'individual' ORDER BY orders.id DESC");
+// Mengambil ID pesanan dari URL
+$order_id = $_GET['id'];
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $rejection_notes = $_POST['rejection_notes'];
+
+    // Memperbarui status pesanan menjadi ditolak dan menambahkan catatan penolakan
+    $stmt = $conn->prepare("UPDATE orders SET status = 'rejected', rejection_notes = ? WHERE id = ?");
+    $stmt->bind_param("si", $rejection_notes, $order_id);
+    $stmt->execute();
+
+    // Arahkan kembali ke halaman manage_orders.php
+    header('Location: manage_orders.php');
+    exit();
+}
+
+// Mengambil data pesanan dari database
+$stmt = $conn->prepare("SELECT * FROM orders WHERE id = ?");
+$stmt->bind_param("i", $order_id);
 $stmt->execute();
 $result = $stmt->get_result();
-$orders = $result->fetch_all(MYSQLI_ASSOC);
+$order = $result->fetch_assoc();
+
+if (!$order) {
+    die("Pesanan tidak ditemukan.");
+}
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-    <title>Pengelolaan Pesanan - Admin - Percetakan Orieska</title>
+<title>Tolak Pesanan - Admin - Percetakan Orieska</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -172,39 +193,18 @@ $orders = $result->fetch_all(MYSQLI_ASSOC);
         </div>
     </div>
     <div class="content">
-        <h2>Pengelolaan Pesanan Konsumen Perorangan</h2>
-        <table>
-            <tr>
-                <th>ID</th>
-                <th>Pengguna</th>
-                <th>Alamat</th>
-                <th>Metode Pengiriman</th>
-                <th>Metode Pembayaran</th>
-                <th>Total</th>
-                <th>Status</th>
-                <th>Aksi</th>
-            </tr>
-            <?php foreach ($orders as $order): ?>
-                <tr>
-                    <td><?= $order['id'] ?></td>
-                    <td><?= $order['username'] ?></td>
-                    <td><?= $order['address'] ?></td>
-                    <td><?= $order['shipping_method'] ?></td>
-                    <td><?= $order['payment_method'] ?></td>
-                    <td>Rp <?= number_format($order['total'], 2, ',', '.') ?></td>
-                    <td><?= $order['status'] ?></td>
-                    <td>
-                        <a class="btn btn-primary btn-sm" href="view_order.php?id=<?= $order['id'] ?>" role="button">Lihat Detail</a>
-                        <a class="btn btn-secondary btn-sm" href="update_status.php?id=<?= $order['id'] ?>&status=approved" role="button">Update Status Setujui</a>
-                        <a class="btn btn-dark btn-sm" href="update_status.php?id=<?= $order['id'] ?>&status=proofing" role="button">Update Status Proofing</a>
-                        <a class="btn btn-warning btn-sm" href="update_status.php?id=<?= $order['id'] ?>&status=production" role="button">Update Status Produksi</a>
-                        <a class="btn btn-info btn-sm" href="update_status.php?id=<?= $order['id'] ?>&status=shipped" role="button">Update Status Kirim</a>
-                        <a class="btn btn-success btn-sm" href="update_status.php?id=<?= $order['id'] ?>&status=completed" role="button">Update Status Selesai</a>
-                        <a class="btn btn-danger btn-sm" href="reject_order.php?id=<?= $order['id'] ?>" role="button">Tolak</a>
-                    </td>
-                </tr>
-                <?php endforeach; ?>
-            </table>
-        </div>
+        <h2>Tolak Pesanan</h2>
+        <form method="post" action="reject_order.php?id=<?= $order_id ?>">
+            <div class="mb-3">
+                <label for="rejection_notes" class="form-label">Alasan Penolakan:</label>
+                <textarea class="form-control" id="rejection_notes" name="rejection_notes" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-danger">Tolak Pesanan</button>
+            <a href="manage_orders.php" class="btn btn-secondary">Batal</a>
+        </form>
+    </div>
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
 </body>
 </html>
