@@ -2,46 +2,55 @@
 session_start();
 include '../includes/db.php';
 
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'individual') {
+// Pastikan pengguna sudah login
+if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
     exit();
 }
 
-// Mengambil data produk dari database
-$stmt = $conn->prepare("SELECT * FROM products WHERE company = 0");
-$stmt->execute();
-$result = $stmt->get_result();
-$products = $result->fetch_all(MYSQLI_ASSOC);
+$order_id = $_GET['order_id'];
+
+// Ambil username dari sesi, pastikan bahwa session memiliki key 'username'
+$username = isset($_SESSION['username']) ? $_SESSION['username'] : '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $address = $_POST['address'];
+    $expedition = $_POST['expedition'];
+
+    // Update status pesanan dan simpan detail pengiriman retur
+    $stmt = $conn->prepare("UPDATE orders SET status = 'being_returned' WHERE id = ?");
+    if ($stmt === false) {
+        die('Prepare failed: ' . htmlspecialchars($conn->error));
+    }
+    $stmt->bind_param("i", $order_id);
+    if (!$stmt->execute()) {
+        die('Execute failed: ' . htmlspecialchars($stmt->error));
+    }
+    $stmt->close();
+
+    $stmt = $conn->prepare("INSERT INTO return_shipments (order_id, sender_name, sender_address, expedition) VALUES (?, ?, ?, ?)");
+    if ($stmt === false) {
+        die('Prepare failed: ' . htmlspecialchars($conn->error));
+    }
+    $stmt->bind_param("isss", $order_id, $username, $address, $expedition);
+    if (!$stmt->execute()) {
+        die('Execute failed: ' . htmlspecialchars($stmt->error));
+    }
+    $stmt->close();
+
+    header('Location: order_history.php');
+    exit();
+}
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
-  <!-- Required meta tags -->
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Percetakan Orieska</title>
-  <!-- Bootstrap CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Bootstrap Icons -->
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.8.1/font/bootstrap-icons.min.css" rel="stylesheet">
-  <!-- AOS CSS -->
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" rel="stylesheet">
-  <!-- Custom CSS -->
-  <link href="https://stackpath.bootstrapcdn.com/bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    .card-img-top {
-      height: 200px; /* Sesuaikan tinggi gambar sesuai kebutuhan */
-      object-fit: cover;
-    }
-    .card-body {
-      height: 150px; /* Sesuaikan tinggi tubuh kartu sesuai kebutuhan */
-      overflow: hidden;
-    }
-    .card-title, .card-text {
-      margin-bottom: 10px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Pengiriman Retur - Percetakan Orieska</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
     <!-- Navbar -->
@@ -105,24 +114,32 @@ $products = $result->fetch_all(MYSQLI_ASSOC);
     </nav>
 
     <div class="container mt-5">
-        <h2>Katalog Produk</h2>
-        <div class="row">
-            <?php foreach ($products as $product): ?>
-                <div class="col-md-4">
-                    <div class="card mb-4">
-                        <img src="../uploads/products/<?= $product['image'] ?>" class="card-img-top" alt="<?= $product['name'] ?>">
-                        <div class="card-body">
-                            <h5 class="card-title"><?= $product['name'] ?></h5>
-                            <p class="card-text">Rp <?= number_format($product['price'], 2, ',', '.') ?></p>
-                            <a href="product_detail.php?id=<?= $product['id'] ?>" class="btn btn-primary">Lihat Detail</a>
-                        </div>
-                    </div>
-                </div>
-            <?php endforeach; ?>
-        </div>
+        <h2 class="text-center">Form Pengiriman Retur</h2>
+        <form method="post" action="return_form.php?order_id=<?= $order_id ?>">
+            <div class="mb-3">
+                <label for="username" class="form-label">Nama Pengirim</label>
+                <input type="text" class="form-control" id="username" name="username" value="<?= htmlspecialchars($username) ?>" readonly>
+            </div>
+            <div class="mb-3">
+                <label for="address" class="form-label">Alamat Pengirim</label>
+                <textarea class="form-control" id="address" name="address" required></textarea>
+            </div>
+            <div class="mb-3">
+                <label for="expedition" class="form-label">Ekspedisi Pengiriman</label>
+                <select class="form-select" id="expedition" name="expedition" required>
+                    <option value="jnt">JNT</option>
+                    <option value="jne">JNE</option>
+                    <option value="anteraja">Anteraja</option>
+                    <option value="ambil_ditempat">Ambil Ditempat</option>
+                </select>
+                <small class="form-text text-muted">Jika masih berada di kawasan kota Bandung, bisa pilih ambil ditempat.</small>
+            </div>
+            <button type="submit" class="btn btn-primary">Kirim</button>
+        </form>
     </div>
 
-    <!-- Bootstrap JS and dependencies -->
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
+    <!-- Bootstrap JS dan dependensi -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
 </body>
 </html>

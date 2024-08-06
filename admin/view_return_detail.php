@@ -8,77 +8,20 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     exit();
 }
 
-$order_id = $_GET['id'];
+$order_id = $_GET['order_id'];
 
-// Mengambil data produk yang dipesan
-$stmt = $conn->prepare("SELECT product_id FROM order_items WHERE order_id = ?");
+// Mengambil detail pengiriman pengembalian dari tabel return_shipments
+$stmt = $conn->prepare("SELECT * FROM return_shipments WHERE order_id = ?");
 $stmt->bind_param("i", $order_id);
 $stmt->execute();
 $result = $stmt->get_result();
-$order_items = $result->fetch_all(MYSQLI_ASSOC);
-
-// Mengambil daftar bahan baku yang terkait dengan produk yang dipesan
-$product_ids = array_column($order_items, 'product_id');
-$placeholders = implode(',', array_fill(0, count($product_ids), '?'));
-$type_str = str_repeat('i', count($product_ids));
-
-$query = "SELECT pm.product_id, pm.material_id, i.name, i.quantity 
-          FROM product_materials pm 
-          JOIN inventory i ON pm.material_id = i.id 
-          WHERE pm.product_id IN ($placeholders)";
-$stmt = $conn->prepare($query);
-$stmt->bind_param($type_str, ...$product_ids);
-$stmt->execute();
-$result = $stmt->get_result();
-$materials = $result->fetch_all(MYSQLI_ASSOC);
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $materials = $_POST['materials'];
-    $quantities = $_POST['quantities'];
-
-    // Memulai transaksi
-    $conn->begin_transaction();
-
-    try {
-        // Memperbarui stok bahan baku
-        foreach ($materials as $index => $material_id) {
-            $quantity = $quantities[$index];
-
-            // Kurangi stok bahan baku
-            $stmt = $conn->prepare("UPDATE inventory SET quantity = quantity - ? WHERE id = ?");
-            $stmt->bind_param("ii", $quantity, $material_id);
-            if (!$stmt->execute()) {
-                throw new Exception($stmt->error);
-            }
-        }
-
-        // Perbarui status pesanan menjadi produksi
-        $stmt = $conn->prepare("UPDATE orders SET status = 'production' WHERE id = ?");
-        $stmt->bind_param("i", $order_id);
-        if (!$stmt->execute()) {
-            throw new Exception($stmt->error);
-        }
-
-        // Commit transaksi
-        $conn->commit();
-
-        // Debugging
-        echo "Order status updated to 'production' successfully.";
-
-        header("Location: manage_orders.php");
-        exit();
-    } catch (Exception $e) {
-        // Rollback transaksi jika terjadi kesalahan
-        $conn->rollback();
-        die("Error updating order status: " . htmlspecialchars($e->getMessage()));
-    }
-}
+$return_shipment = $result->fetch_assoc();
 ?>
 
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Input Bahan - Admin - Percetakan Orieska</title>
+    <title>Detail Pengembalian</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -134,22 +77,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             padding: 20px;
             height: calc(100vh - 56px); /* Adjust the height to account for the navbar */
         }
-    </style>
-    <script>
-        function validateQuantities() {
-            let valid = true;
-            document.querySelectorAll('.material-group').forEach(group => {
-                const quantityInput = group.querySelector('input[name="quantities[]"]');
-                const maxQuantity = parseInt(group.getAttribute('data-max-quantity'), 10);
-                const quantity = parseInt(quantityInput.value, 10);
-                if (quantity > maxQuantity) {
-                    alert(`Kuantitas Untuk ${group.querySelector('input[name="material_names[]"]').value} Kurang dari jumlah stok : ${maxQuantity}`);
-                    valid = false;
-                }
-            });
-            return valid;
+        table {
+            border-collapse: collapse;
+            width: 100%;
         }
-    </script>
+
+        th, td {
+            text-align: left;
+            padding: 8px;
+        }
+
+        tr:nth-child(even) {background-color: #f2f2f2}
+
+        th {
+            background-color: #778899;
+            color: white;
+        }
+    </style>
 </head>
 <body>
     <!-- Navbar -->
@@ -231,26 +175,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </ul>
             </div>
         </div>
-        <div class="content">
-        <h2>Input Bahan untuk Produksi</h2>
-        <form method="post" action="input_materials.php?id=<?= $order_id ?>" onsubmit="return validateQuantities();">
-            <div id="materials-container">
-                <?php foreach ($materials as $index => $material): ?>
-                <div class="mb-3 material-group" data-max-quantity="<?= $material['quantity'] ?>">
-                    <label for="material-<?= $index ?>" class="form-label">Bahan Baku:</label>
-                    <input type="text" id="material-<?= $index ?>" name="material_names[]"  class="form-control" value="<?= $material['name'] ?> (Stok: <?= $material['quantity'] ?>)" readonly>
-                    <input type="hidden" name="materials[]" value="<?= $material['material_id'] ?>">
-                    <label for="quantity-<?= $index ?>" class="form-label">Quantity:</label>
-                    <input type="number" id="quantity-<?= $index ?>" name="quantities[]" class="form-control" required>
-                </div>
-                <?php endforeach; ?>
-            </div>
-            <button type="submit" class="btn btn-primary">Submit</button>
-        </form>
-    </div>
 
-    <!-- Bootstrap JS and dependencies -->
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
+    <div class="content">
+        <h2 class="text-center">Detail Pengembalian</h2>
+        <?php if ($return_shipment): ?>
+            <table class="table table-bordered">
+                <tr>
+                    <th>ID Pengembalian</th>
+                    <td><?= htmlspecialchars($return_shipment['id']); ?></td>
+                </tr>
+                <tr>
+                    <th>Order ID</th>
+                    <td><?= htmlspecialchars($return_shipment['order_id']); ?></td>
+                </tr>
+                <tr>
+                    <th>Nama Pengirim</th>
+                    <td><?= htmlspecialchars($return_shipment['sender_name']); ?></td>
+                </tr>
+                <tr>
+                    <th>Alamat Pengirim</th>
+                    <td><?= htmlspecialchars($return_shipment['sender_address']); ?></td>
+                </tr>
+                    <tr>
+                        <th>Ekspedisi</th>
+                        <td><?= htmlspecialchars($return_shipment['expedition']); ?></td>
+                    </tr>
+                </table>
+            <?php else: ?>
+                <p>Tidak ada detail pengiriman untuk pengembalian ini.</p>
+            <?php endif; ?>
+        </div>
+    </div>
 </body>
 </html>

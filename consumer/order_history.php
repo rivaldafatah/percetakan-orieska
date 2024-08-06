@@ -11,21 +11,28 @@ if (!isset($_SESSION['user_id'])) {
 $user_id = $_SESSION['user_id'];
 
 // Mengambil data pesanan dari database dan mengurutkan berdasarkan order_id dalam urutan menurun
-$stmt = $conn->prepare("SELECT orders.id AS order_id, orders.total, orders.status, 
-                        orders.tracking_number, order_items.product_id, order_items.quantity, 
-                        products.name AS product_name, orders.payment_proof
-                        FROM orders 
-                        JOIN order_items ON orders.id = order_items.order_id
-                        JOIN products ON order_items.product_id = products.id
-                        WHERE orders.user_id = ?
-                        ORDER BY orders.id DESC");
-$stmt->bind_param("i", $user_id);
-$stmt->execute();
-$result = $stmt->get_result();
-$orders = [];
+$query = "SELECT orders.id AS order_id, orders.total, orders.status, 
+          orders.tracking_number, order_items.product_id, order_items.quantity, 
+          products.name AS product_name, orders.payment_proof
+          FROM orders 
+          JOIN order_items ON orders.id = order_items.order_id
+          JOIN products ON order_items.product_id = products.id
+          WHERE orders.user_id = ?
+          ORDER BY orders.id DESC";
 
-while ($row = $result->fetch_assoc()) {
-    $orders[] = $row;
+if ($stmt = $conn->prepare($query)) {
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $orders = [];
+
+    while ($row = $result->fetch_assoc()) {
+        $orders[] = $row;
+    }
+
+    $stmt->close();
+} else {
+    die("Error preparing statement: " . htmlspecialchars($conn->error));
 }
 ?>
 
@@ -135,9 +142,13 @@ while ($row = $result->fetch_assoc()) {
                                 <?php elseif ($order['status'] === 'return_rejected'): ?>
                                     <span class="badge bg-danger">Retur Ditolak</span>
                                 <?php elseif ($order['status'] === 'return_approved'): ?>
-                                    <span class="badge bg-primary">Retur Diterima</span>
+                                    <a class="btn btn-danger btn-sm" href="return_form.php?order_id=<?= $order['order_id'] ?>">Retur Barang</a>
                                 <?php elseif ($order['status'] === 'completed'): ?>
                                     <span class="badge bg-success">Selesai</span>
+                                <?php elseif ($order['status'] === 'being_returned'): ?>
+                                    <span class="badge bg-primary">Sedang Dikembalikan</span>
+                                <?php elseif ($order['status'] === 'return_failed'): ?>
+                                    <span class="badge bg-danger">Pengembalian Gagal</span>
                                 <?php endif; ?>
                             </td>
                         </tr>
@@ -147,7 +158,7 @@ while ($row = $result->fetch_assoc()) {
         <?php endif; ?>
     </div>
 
-    <!-- Bootstrap JS and dependencies -->
+    <!-- Bootstrap JS dan dependensi -->
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
 </body>

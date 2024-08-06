@@ -30,6 +30,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt = $conn->prepare("UPDATE orders SET status = 'return_rejected' WHERE id = (SELECT order_id FROM returns WHERE id = ?)");
         $stmt->bind_param("i", $return_id);
         $stmt->execute();
+    } elseif ($action === 'received') {
+        $stmt = $conn->prepare("UPDATE returns SET status = 'returned' WHERE id = ?");
+        $stmt->bind_param("i", $return_id);
+        $stmt->execute();
+
+        // Update status pesanan di konsumen menjadi 'returned'
+        $stmt = $conn->prepare("UPDATE orders SET status = 'returned' WHERE id = (SELECT order_id FROM returns WHERE id = ?)");
+        $stmt->bind_param("i", $return_id);
+        $stmt->execute();
     }
 
     header('Location: manage_returns.php');
@@ -111,21 +120,21 @@ $orders = $result->fetch_all(MYSQLI_ASSOC);
             height: calc(100vh - 56px); /* Adjust the height to account for the navbar */
         }
         table {
-  border-collapse: collapse;
-  width: 100%;
-}
+            border-collapse: collapse;
+            width: 100%;
+        }
 
-th, td {
-  text-align: left;
-  padding: 8px;
-}
+        th, td {
+            text-align: left;
+            padding: 8px;
+        }
 
-tr:nth-child(even){background-color: #f2f2f2}
+        tr:nth-child(even) {background-color: #f2f2f2}
 
-th {
-  background-color: #778899;
-  color: white;
-}
+        th {
+            background-color: #778899;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -211,55 +220,66 @@ th {
         <div class="content">
             <h2>Pengelolaan Pengembalian</h2>
             <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>ID Retur</th>
-                    <th>Order ID</th>
-                    <th>Username</th>
-                    <th><center>Alasan<center></th>
-                    <th><center>Bukti Retur<center></th>
-                    <th>Status</th>
-                    <th>Aksi</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($returns as $return): ?>
+                <thead>
                     <tr>
-                        <td><?= htmlspecialchars($return['id']); ?></td>
-                        <td><?= htmlspecialchars($return['order_id']); ?></td>
-                        <td><?= htmlspecialchars($return['username']); ?></td>
-                        <td><?= htmlspecialchars($return['reason']); ?></td>
-                        <td><center>
-                            <?php if ($return['proof_image']): ?>
-                                <a class="btn btn-warning btn-sm" href="../uploads/returns/<?= htmlspecialchars($return['proof_image']); ?>" target="_blank">Lihat Bukti</a>
-                            <?php else: ?>
-                                Tidak ada bukti
-                            <?php endif; ?>
-                            <a class="btn btn-primary btn-sm" href="view_order.php?id=<?= htmlspecialchars($return['order_id']); ?>" role="button">Lihat Detail</a></center>
-                        </td>
-                        <td><?= htmlspecialchars($return['status']); ?></td>
-                        <td>
-                            <?php if ($return['status'] === 'pending'): ?>
-                                <form method="post" action="manage_returns.php" style="display:inline;">
-                                    <input type="hidden" name="return_id" value="<?= $return['id']; ?>">
-                                    <input type="hidden" name="action" value="accept">
-                                    <button type="submit" class="btn btn-success">Terima</button>
-                                </form>
-                                <form method="post" action="manage_returns.php" style="display:inline;">
-                                    <input type="hidden" name="return_id" value="<?= $return['id']; ?>">
-                                    <input type="hidden" name="action" value="reject">
-                                    <button type="submit" class="btn btn-danger">Tolak</button>
-                                </form>
-                            <?php elseif ($return['status'] === 'approved'): ?>
-                                <span class="badge bg-success">Diterima</span>
-                            <?php elseif ($return['status'] === 'rejected'): ?>
-                                <span class="badge bg-danger">Ditolak</span>
-                            <?php endif; ?>
-                        </td>
+                        <th>ID Retur</th>
+                        <th>Order ID</th>
+                        <th>Username</th>
+                        <th><center>Alasan<center></th>
+                        <th><center>Bukti Retur<center></th>
+                        <th>Status</th>
+                        <th>Aksi</th>
                     </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    <?php foreach ($returns as $return): ?>
+                        <tr>
+                            <td><?= htmlspecialchars($return['id']); ?></td>
+                            <td><?= htmlspecialchars($return['order_id']); ?></td>
+                            <td><?= htmlspecialchars($return['username']); ?></td>
+                            <td><?= htmlspecialchars($return['reason']); ?></td>
+                            <td><center>
+                                <?php if ($return['proof_image']): ?>
+                                    <a class="btn btn-warning btn-sm" href="../uploads/returns/<?= htmlspecialchars($return['proof_image']); ?>" target="_blank">Lihat Bukti</a>
+                                <?php else: ?>
+                                    Tidak ada bukti
+                                <?php endif; ?>
+                                <a class="btn btn-primary btn-sm" href="view_order.php?id=<?= htmlspecialchars($return['order_id']); ?>" role="button">Lihat Detail</a>
+                                <?php if ($return['status'] !== 'rejected'): ?>
+                                    <a class="btn btn-info btn-sm" href="view_return_detail.php?order_id=<?= $return['order_id']; ?>">Lihat Pengembalian</a>
+                                <?php endif; ?>
+                            </center></td>
+                            <td><?= htmlspecialchars($return['status']); ?></td>
+                            <td>
+                                <?php if ($return['status'] === 'pending'): ?>
+                                    <form method="post" action="manage_returns.php" style="display:inline;">
+                                        <input type="hidden" name="return_id" value="<?= $return['id']; ?>">
+                                        <input type="hidden" name="action" value="accept">
+                                        <button type="submit" class="btn btn-success">Terima</button>
+                                    </form>
+                                    <form method="post" action="manage_returns.php" style="display:inline;">
+                                        <input type="hidden" name="return_id" value="<?= $return['id']; ?>">
+                                        <input type="hidden" name="action" value="reject">
+                                        <button type="submit" class="btn btn-danger">Tolak</button>
+                                    </form>
+                                <?php elseif ($return['status'] === 'approved'): ?>
+                                    <span class="badge bg-success">Diterima</span>
+                                <?php elseif ($return['status'] === 'rejected'): ?>
+                                    <span class="badge bg-danger">Ditolak</span>
+                                <?php elseif ($return['status'] === 'being_returned'): ?>
+                                    <form method="post" action="manage_returns.php" style="display:inline;">
+                                        <input type="hidden" name="return_id" value="<?= $return['id']; ?>">
+                                        <input type="hidden" name="action" value="received">
+                                        <button type="submit" class="btn btn-primary">Terima Pengembalian</button>
+                                    </form>
+                                <?php elseif ($return['status'] === 'returned'): ?>
+                                    <span class="badge bg-info">Dikembalikan</span>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
         </div>
     </div>
 </body>

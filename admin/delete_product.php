@@ -18,17 +18,34 @@ if (isset($_GET['id'])) {
     $result = $stmt->get_result();
     $product = $result->fetch_assoc();
 
-    // Menghapus produk dari database
-    $stmt = $conn->prepare("DELETE FROM products WHERE id = ?");
-    $stmt->bind_param("i", $id);
-    $stmt->execute();
+    // Memulai transaksi
+    $conn->begin_transaction();
 
-    // Menghapus file gambar dari server
-    if ($product['image']) {
-        $image_path = "../uploads/products/" . $product['image'];
-        if (file_exists($image_path)) {
-            unlink($image_path);
+    try {
+        // Menghapus relasi produk dengan bahan baku dari tabel product_materials
+        $stmt = $conn->prepare("DELETE FROM product_materials WHERE product_id = ?");
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+
+        // Menghapus produk dari database
+        $stmt = $conn->prepare("DELETE FROM products WHERE id = ?");
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+
+        // Menghapus file gambar dari server
+        if ($product['image']) {
+            $image_path = "../uploads/products/" . $product['image'];
+            if (file_exists($image_path)) {
+                unlink($image_path);
+            }
         }
+
+        // Commit transaksi
+        $conn->commit();
+    } catch (Exception $e) {
+        // Rollback transaksi jika terjadi kesalahan
+        $conn->rollback();
+        die("Error: " . htmlspecialchars($e->getMessage()));
     }
 
     header('Location: manage_products.php');
