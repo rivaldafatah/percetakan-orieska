@@ -52,12 +52,6 @@ $stmt = $conn->prepare("SELECT returns.*, orders.user_id, users.username FROM re
 $stmt->execute();
 $result = $stmt->get_result();
 $returns = $result->fetch_all(MYSQLI_ASSOC);
-
-// Mengambil daftar pesanan dari konsumen perorangan dari database dan mengurutkannya berdasarkan id pesanan dalam urutan menurun
-$stmt = $conn->prepare("SELECT orders.*, users.username FROM orders JOIN users ON orders.user_id = users.id WHERE users.role = 'individual' ORDER BY orders.id DESC");
-$stmt->execute();
-$result = $stmt->get_result();
-$orders = $result->fetch_all(MYSQLI_ASSOC);
 ?>
 
 <!DOCTYPE html>
@@ -273,7 +267,7 @@ $orders = $result->fetch_all(MYSQLI_ASSOC);
                                         <button type="submit" class="btn btn-primary">Terima Pengembalian</button>
                                     </form>
                                 <?php elseif ($return['status'] === 'returned'): ?>
-                                    <span class="badge bg-info">Dikembalikan</span>
+                                    <span class="badge bg-primary">Retur Diterima</span>
                                 <?php endif; ?>
                             </td>
                         </tr>

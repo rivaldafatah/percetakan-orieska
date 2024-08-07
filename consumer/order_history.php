@@ -147,6 +147,8 @@ if ($stmt = $conn->prepare($query)) {
                                     <span class="badge bg-success">Selesai</span>
                                 <?php elseif ($order['status'] === 'being_returned'): ?>
                                     <span class="badge bg-primary">Sedang Dikembalikan</span>
+                                 <?php elseif ($order['status'] === 'returned'): ?>
+                                    <span class="badge bg-success">Retur Barang Diterima</span>
                                 <?php elseif ($order['status'] === 'return_failed'): ?>
                                     <span class="badge bg-danger">Pengembalian Gagal</span>
                                 <?php endif; ?>
