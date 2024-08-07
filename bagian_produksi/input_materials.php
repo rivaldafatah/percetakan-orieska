@@ -10,11 +10,27 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'bagian_produksi') {
 
 $order_id = $_GET['id'];
 
-// Mengambil daftar bahan baku dari database
-$stmt = $conn->prepare("SELECT * FROM inventory");
+// Mengambil data produk yang dipesan
+$stmt = $conn->prepare("SELECT product_id FROM order_items WHERE order_id = ?");
+$stmt->bind_param("i", $order_id);
 $stmt->execute();
 $result = $stmt->get_result();
-$inventory = $result->fetch_all(MYSQLI_ASSOC);
+$order_items = $result->fetch_all(MYSQLI_ASSOC);
+
+// Mengambil daftar bahan baku yang terkait dengan produk yang dipesan
+$product_ids = array_column($order_items, 'product_id');
+$placeholders = implode(',', array_fill(0, count($product_ids), '?'));
+$type_str = str_repeat('i', count($product_ids));
+
+$query = "SELECT pm.product_id, pm.material_id, i.name, i.quantity 
+          FROM product_materials pm 
+          JOIN inventory i ON pm.material_id = i.id 
+          WHERE pm.product_id IN ($placeholders)";
+$stmt = $conn->prepare($query);
+$stmt->bind_param($type_str, ...$product_ids);
+$stmt->execute();
+$result = $stmt->get_result();
+$materials = $result->fetch_all(MYSQLI_ASSOC);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $materials = $_POST['materials'];
@@ -119,6 +135,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             height: calc(100vh - 56px); /* Adjust the height to account for the navbar */
         }
     </style>
+    <script>
+        function validateQuantities() {
+            let valid = true;
+            document.querySelectorAll('.material-group').forEach(group => {
+                const quantityInput = group.querySelector('input[name="quantities[]"]');
+                const maxQuantity = parseInt(group.getAttribute('data-max-quantity'), 10);
+                const quantity = parseInt(quantityInput.value, 10);
+                if (quantity > maxQuantity) {
+                    alert(`Kuantitas Untuk ${group.querySelector('input[name="material_names[]"]').value} Kurang dari jumlah stok : ${maxQuantity}`);
+                    valid = false;
+                }
+            });
+            return valid;
+        }
+    </script>
 </head>
 <body>
     <!-- Navbar -->
@@ -165,45 +196,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
         <div class="content">
         <h2>Input Bahan untuk Produksi</h2>
-        <form method="post" action="input_materials.php?id=<?= $order_id ?>">
+        <form method="post" action="input_materials.php?id=<?= $order_id ?>" onsubmit="return validateQuantities();">
             <div id="materials-container">
-                <div class="mb-3">
-                    <label for="material-0" class="form-label">Bahan Baku:</label>
-                    <select id="material-0" name="materials[]" class="form-select">
-                        <?php foreach ($inventory as $item): ?>
-                            <option value="<?= $item['id'] ?>"><?= $item['name'] ?> (Stok: <?= $item['quantity'] ?>)</option>
-                        <?php endforeach; ?>
-                    </select>
-                    <label for="quantity-0" class="form-label">Quantity:</label>
-                    <input type="number" id="quantity-0" name="quantities[]" class="form-control" required>
+                <?php foreach ($materials as $index => $material): ?>
+                <div class="mb-3 material-group" data-max-quantity="<?= $material['quantity'] ?>">
+                    <label for="material-<?= $index ?>" class="form-label">Bahan Baku:</label>
+                    <input type="text" id="material-<?= $index ?>" name="material_names[]"  class="form-control" value="<?= $material['name'] ?> (Stok: <?= $material['quantity'] ?>)" readonly>
+                    <input type="hidden" name="materials[]" value="<?= $material['material_id'] ?>">
+                    <label for="quantity-<?= $index ?>" class="form-label">Quantity:</label>
+                    <input type="number" id="quantity-<?= $index ?>" name="quantities[]" class="form-control" required>
                 </div>
+                <?php endforeach; ?>
             </div>
-            <button type="button" class="btn btn-secondary" onclick="addMaterial()">Tambah Bahan Lain</button>
             <button type="submit" class="btn btn-primary">Submit</button>
         </form>
     </div>
-
-    <script>
-        let materialIndex = 1;
-
-        function addMaterial() {
-            const container = document.getElementById('materials-container');
-            const newMaterial = document.createElement('div');
-            newMaterial.classList.add('mb-3');
-            newMaterial.innerHTML = `
-                <label for="material-${materialIndex}" class="form-label">Bahan Baku:</label>
-                <select id="material-${materialIndex}" name="materials[]" class="form-select">
-                    <?php foreach ($inventory as $item): ?>
-                        <option value="<?= $item['id'] ?>"><?= $item['name'] ?> (Stok: <?= $item['quantity'] ?>)</option>
-                    <?php endforeach; ?>
-                </select>
-                <label for="quantity-${materialIndex}" class="form-label">Quantity:</label>
-                <input type="number" id="quantity-${materialIndex}" name="quantities[]" class="form-control" required>
-            `;
-            container.appendChild(newMaterial);
-            materialIndex++;
-        }
-    </script>
 
     <!-- Bootstrap JS and dependencies -->
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>

@@ -17,7 +17,20 @@ if (isset($_GET['id'])) {
     $stmt->execute();
     $result = $stmt->get_result();
     $product = $result->fetch_assoc();
+
+    // Mengambil bahan yang digunakan oleh produk
+    $stmt = $conn->prepare("SELECT material_id FROM product_materials WHERE product_id = ?");
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $product_materials = $result->fetch_all(MYSQLI_ASSOC);
 }
+
+// Mengambil daftar bahan baku dari database
+$stmt = $conn->prepare("SELECT * FROM inventory");
+$stmt->execute();
+$result = $stmt->get_result();
+$inventories = $result->fetch_all(MYSQLI_ASSOC);
 
 // Proses pengeditan produk
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -40,6 +53,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt = $conn->prepare("UPDATE products SET name = ?, description = ?, price = ?, estimasi_pengerjaan = ?, min_order = ?, image = ? WHERE id = ?");
     $stmt->bind_param("ssdsisi", $name, $description, $price, $estimasi_pengerjaan, $min_order, $image, $id);
     $stmt->execute();
+
+    // Menghapus bahan lama yang terkait dengan produk
+    $stmt = $conn->prepare("DELETE FROM product_materials WHERE product_id = ?");
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+
+    // Menambahkan bahan yang baru
+    if (isset($_POST['materials'])) {
+        $materials = $_POST['materials'];
+        foreach ($materials as $material_id) {
+            $stmt = $conn->prepare("INSERT INTO product_materials (product_id, material_id) VALUES (?, ?)");
+            $stmt->bind_param("ii", $id, $material_id);
+            $stmt->execute();
+        }
+    }
 
     header('Location: manage_products.php');
     exit();
@@ -201,8 +229,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <img src="../uploads/products/<?= $product['image'] ?>" alt="<?= $product['name'] ?>" width="100">
             <?php endif; ?>
             </div>
+            <div id="materials-container">
+                <?php foreach ($product_materials as $index => $product_material): ?>
+                <div class="mb-3">
+                    <label for="material-<?= $index ?>" class="form-label">Bahan Baku:</label>
+                    <select id="material-<?= $index ?>" name="materials[]" class="form-select">
+                        <?php foreach ($inventories as $item): ?>
+                            <option value="<?= $item['id'] ?>" <?= $item['id'] == $product_material['material_id'] ? 'selected' : '' ?>><?= $item['name'] ?> (Stok: <?= $item['quantity'] ?>)</option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <?php endforeach; ?>
+            </div>
+            <button type="button" class="btn btn-secondary" onclick="addMaterial()">Tambah Bahan Lain</button>
             <button type="submit" class="btn btn-primary">Update Produk</button>
-    </form>
+        </form>
+        </div>
     </div>
+</div>
+
+<script>
+    let materialIndex = <?= count($product_materials) ?>;
+
+    function addMaterial() {
+        const container = document.getElementById('materials-container');
+        const newMaterial = document.createElement('div');
+        newMaterial.classList.add('mb-3');
+        newMaterial.innerHTML = `
+            <label for="material-${materialIndex}" class="form-label">Bahan Baku:</label>
+            <select id="material-${materialIndex}" name="materials[]" class="form-select">
+                <?php foreach ($inventories as $item): ?>
+                    <option value="<?= $item['id'] ?>"><?= $item['name'] ?> (Stok: <?= $item['quantity'] ?>)</option>
+                <?php endforeach; ?>
+            </select>
+        `;
+        container.appendChild(newMaterial);
+        materialIndex++;
+    }
+</script>
+
+<!-- Bootstrap JS and dependencies -->
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
 </body>
 </html>

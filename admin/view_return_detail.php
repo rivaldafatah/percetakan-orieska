@@ -50,74 +50,162 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8">
     <title>Detail Pengembalian - Admin - Percetakan Orieska</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+        }
+        .main-content {
+            display: flex;
+            height: 100%;
+        }
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .sidebar {
+            width: 250px;
+            position: sticky;
+            top: 0;
+            background: #343a40;
+            color: #fff;
+            height: 100vh;
+            overflow-y: auto;
+            padding: 0;
+        }
+        .sidebar .nav-link {
+            color: #fff;
+        }
+        .sidebar .nav-link.active {
+            background: #495057;
+        }
+        .sidebar .nav-link:hover {
+            background: #495057;
+        }
+        .sidebar .dropdown-menu {
+            background: #343a40;
+            border: none;
+        }
+        .sidebar .dropdown-item {
+            color: #fff;
+        }
+        .sidebar .dropdown-item:hover {
+            background: #495057;
+        }
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            height: calc(100vh - 56px); /* Adjust the height to account for the navbar */
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 8px;
+        }
+
+        tr:nth-child(even) {background-color: #f2f2f2}
+
+        th {
+            background-color: #778899;
+            color: white;
+        }
+    </style>
 </head>
 <body>
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+    <nav class="navbar navbar-dark bg-dark">
         <div class="container-fluid">
-            <a class="navbar-brand" href="#">Percetakan Orieska</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNavDropdown">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item">
-                        <a class="nav-link" aria-current="page" href="#">Beranda</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Layanan Vendor</a>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="katalogDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            Katalog
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="katalogDropdown">
-                            <li><a class="dropdown-item" href="#">Banner</a></li>
-                            <li><a class="dropdown-item" href="#">Buku</a></li>
-                            <li><a class="dropdown-item" href="#">Plakat</a></li>
-                            <li><a class="dropdown-item" href="#">Stiker</a></li>
-                            <li><a class="dropdown-item" href="#">Kartu Nama</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Tentang</a>
-                    </li>
-                </ul>
-                <ul class="navbar-nav mb-2 mb-lg-0">
-                    <li class="nav-item">
-                        <a class="nav-link" href="cart.php"><i class="bi bi-cart"></i> Keranjang</a>
-                    </li>
-                    <?php if (isset($_SESSION['username'])): ?>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <?= htmlspecialchars($_SESSION['username']); ?>
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                                <li><a class="dropdown-item" href="logout.php">Logout</a></li>
-                            </ul>
-                        </li>
-                    <?php else: ?>
-                        <li class="nav-item">
-                            <a class="nav-link" href="login.php">Login</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="register.php">Register</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="logout.php">Logout</a>
-                        </li>
-                    <?php endif; ?>
-                </ul>
+            <a class="navbar-brand" href="#">Admin Dashboard</a>
+            <div class="d-flex">
+                <div class="navbar-text text-white me-3">
+                    Logged in as: <strong><?php echo htmlspecialchars($_SESSION['username']); ?></strong>
+                </div>
+                <a class="btn btn-outline-light" href="logout.php">Logout</a>
             </div>
         </div>
     </nav>
+    <div class="main-content">
+        <div class="sidebar">
+            <div class="p-3">
+                <h4>Menu</h4>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="dashboard.php">Dashboard</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Produk
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="manage_products.php">List Produk</a></li>
+                            <li><a class="dropdown-item" href="add_product.php">Tambah Produk</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Manajemen Stok
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="manage_inventory.php">Stok Bahan</a></li>
+                            <li><a class="dropdown-item" href="add_inventory.php">Tambah Bahan Baku</a></li>
+                            <li><a class="dropdown-item" href="request_stock.php">Permintaan Bahan Baku</a></li>
+                            <li><a class="dropdown-item" href="manage_requests.php">Cetak</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Pengeluaran
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="input_expense.php">Tambah Pengeluaran</a></li>
+                            <li><a class="dropdown-item" href="manage_expenses.php">Laporan Pengeluaran</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Pesanan Konsumen
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="manage_orders.php">Konsumen Perorangan</a></li>
+                            <li><a class="dropdown-item" href="manage_company_orders.php">Konsumen Perusahaan</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="manage_returns.php">Pengembalian</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="company_register.php">Daftar Akun Perusahaan</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Kelola Akun Konsumen
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="manage_accounts.php">Akun Perorangan</a></li>
+                            <li><a class="dropdown-item" href="manage_company_accounts.php">Akun Perusahaan</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="manage_users.php">Kelola Semua Akun</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
 
-    <div class="container mt-5">
+    <div class="content">
         <h2 class="text-center">Detail Pengembalian</h2>
         <?php if ($return_shipment): ?>
             <table class="table table-bordered">

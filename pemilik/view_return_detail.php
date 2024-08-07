@@ -8,49 +8,50 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'pemilik') {
     exit();
 }
 
-// Mengambil daftar bahan baku dari database
-$stmt = $conn->prepare("SELECT * FROM inventory");
+$order_id = $_GET['order_id'];
+
+// Mengambil detail pengiriman pengembalian dari tabel return_shipments dan status dari tabel orders
+$stmt = $conn->prepare("SELECT rs.*, o.status AS order_status FROM return_shipments rs JOIN orders o ON rs.order_id = o.id WHERE rs.order_id = ?");
+$stmt->bind_param("i", $order_id);
 $stmt->execute();
 $result = $stmt->get_result();
-$inventories = $result->fetch_all(MYSQLI_ASSOC);
+$return_shipment = $result->fetch_assoc();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = $_POST['name'];
-    $description = $_POST['description'];
-    $price = $_POST['price'];
-    $estimasi_pengerjaan = $_POST['estimasi_pengerjaan'];
-    $min_order = $_POST['min_order'];
-    $image = $_FILES['image']['name'];
+    $status = 'returned';
 
-    $target_dir = "../uploads/products/";
-    $target_file = $target_dir . basename($image);
-    move_uploaded_file($_FILES['image']['tmp_name'], $target_file);
-
-    $stmt = $conn->prepare("INSERT INTO products (name, description, price, estimasi_pengerjaan, min_order, image) VALUES (?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("ssdsds", $name, $description, $price, $estimasi_pengerjaan, $min_order, $image);
-    $stmt->execute();
-    
-    $product_id = $stmt->insert_id;
-
-    if (isset($_POST['materials'])) {
-        $materials = $_POST['materials'];
-        foreach ($materials as $material_id) {
-            $stmt = $conn->prepare("INSERT INTO product_materials (product_id, material_id) VALUES (?, ?)");
-            $stmt->bind_param("ii", $product_id, $material_id);
-            $stmt->execute();
-        }
+    // Memperbarui status pengembalian menjadi 'returned' di tabel returns
+    $stmt = $conn->prepare("UPDATE returns SET status = ? WHERE order_id = ?");
+    if ($stmt === false) {
+        die('Prepare failed: ' . htmlspecialchars($conn->error));
     }
+    $stmt->bind_param("si", $status, $order_id);
+    if (!$stmt->execute()) {
+        die('Execute failed: ' . htmlspecialchars($stmt->error));
+    }
+    $stmt->close();
 
-    header('Location: manage_products.php');
+    // Memperbarui status pengembalian di tabel orders
+    $stmt = $conn->prepare("UPDATE orders SET status = 'returned' WHERE id = ?");
+    if ($stmt === false) {
+        die('Prepare failed: ' . htmlspecialchars($conn->error));
+    }
+    $stmt->bind_param("i", $order_id);
+    if (!$stmt->execute()) {
+        die('Execute failed: ' . htmlspecialchars($stmt->error));
+    }
+    $stmt->close();
+
+    header('Location: manage_returns.php');
     exit();
 }
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-    <title>Tambah Produk - Admin - Percetakan Orieska</title>
-    <meta charset="utf-8">
+<meta charset="utf-8">
+    <title>Detail Pengembalian - Admin - Percetakan Orieska</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -105,11 +106,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             padding: 20px;
             height: calc(100vh - 56px); /* Adjust the height to account for the navbar */
         }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 8px;
+        }
+
+        tr:nth-child(even) {background-color: #f2f2f2}
+
+        th {
+            background-color: #778899;
+            color: white;
+        }
     </style>
 </head>
 <body>
- <!-- Navbar -->
- <nav class="navbar navbar-dark bg-dark">
+    <!-- Navbar -->
+<nav class="navbar navbar-dark bg-dark">
         <div class="container-fluid">
             <a class="navbar-brand" href="#">Pemilik Dashboard</a>
             <div class="d-flex">
@@ -169,71 +186,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </ul>
             </div>
         </div>
-        <div class="content">
-        <h2>Tambah Produk Baru</h2>
-        <form method="post" action="add_product.php" enctype="multipart/form-data">
-            <div class="mb-3">
-                <label class="form-label">Nama Produk:</label>
-                <input type="text" class="form-control" name="name" required>
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Deskripsi:</label>
-                <textarea class="form-control" rows="3" name="description" required></textarea>
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Harga:</label>
-                <input type="number" class="form-control" step="0.01" name="price" required>
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Estimasi Pengerjaan:</label>
-                <input type="text" class="form-control" name="estimasi_pengerjaan" required>
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Minimum Order:</label>
-                <input type="number" class="form-control" name="min_order" required>
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Gambar:</label>
-                <input type="file" class="form-control" name="image" required>
-            </div>
-            <div id="materials-container">
-                <div class="mb-3">
-                    <label for="material-0" class="form-label">Bahan Baku:</label>
-                    <select id="material-0" name="materials[]" class="form-select">
-                        <?php foreach ($inventories as $item): ?>
-                            <option value="<?= $item['id'] ?>"><?= $item['name'] ?> (Stok: <?= $item['quantity'] ?>)</option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-            </div>
-            <button type="button" class="btn btn-secondary" onclick="addMaterial()">Tambah Bahan Lain</button>
-            <button type="submit" class="btn btn-primary">Tambah Produk</button>
-        </form>
+
+    <div class="content">
+        <h2 class="text-center">Detail Pengembalian</h2>
+        <?php if ($return_shipment): ?>
+            <table class="table table-bordered">
+                <tr>
+                    <th>ID Pengembalian</th>
+                    <td><?= htmlspecialchars($return_shipment['id']); ?></td>
+                </tr>
+                <tr>
+                    <th>Order ID</th>
+                    <td><?= htmlspecialchars($return_shipment['order_id']); ?></td>
+                </tr>
+                <tr>
+                    <th>Nama Pengirim</th>
+                    <td><?= htmlspecialchars($return_shipment['sender_name']); ?></td>
+                </tr>
+                <tr>
+                    <th>Alamat Pengirim</th>
+                    <td><?= htmlspecialchars($return_shipment['sender_address']); ?></td>
+                </tr>
+                <tr>
+                    <th>Ekspedisi</th>
+                    <td><?= htmlspecialchars($return_shipment['expedition']); ?></td>
+                </tr>
+                <tr>
+                    <th>Status Pengembalian</th>
+                    <td><?= htmlspecialchars($return_shipment['order_status']); ?></td>
+                </tr>
+            </table>
+            <?php if ($return_shipment['order_status'] === 'being_returned'): ?>
+                <form method="post" action="view_return_detail.php?order_id=<?= $order_id; ?>">
+                    <input type="hidden" name="return_id" value="<?= $return_shipment['id']; ?>">
+                    <button type="submit" class="btn btn-success">Tandai Sebagai Diterima</button>
+                </form>
+            <?php endif; ?>
+        <?php else: ?>
+            <p class="text-center">Tidak ada detail pengembalian yang ditemukan.</p>
+        <?php endif; ?>
     </div>
-</div>
 
-<script>
-    let materialIndex = 1;
-
-    function addMaterial() {
-        const container = document.getElementById('materials-container');
-        const newMaterial = document.createElement('div');
-        newMaterial.classList.add('mb-3');
-        newMaterial.innerHTML = `
-            <label for="material-${materialIndex}" class="form-label">Bahan Baku:</label>
-            <select id="material-${materialIndex}" name="materials[]" class="form-select">
-                <?php foreach ($inventories as $item): ?>
-                    <option value="<?= $item['id'] ?>"><?= $item['name'] ?> (Stok: <?= $item['quantity'] ?>)</option>
-                <?php endforeach; ?>
-            </select>
-        `;
-        container.appendChild(newMaterial);
-        materialIndex++;
-    }
-</script>
-
-<!-- Bootstrap JS and dependencies -->
-<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
+    <!-- Bootstrap JS dan dependensi -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
 </body>
 </html>
