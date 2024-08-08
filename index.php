@@ -86,7 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </ul>
                 <ul class="navbar-nav mb-2 mb-lg-0">
                     <li class="nav-item">
-                        <a class="nav-link" href="cart.php"><i class="bi bi-cart"></i> Keranjang</a>
+                        <a class="nav-link" href="consumer/cart.php"><i class="bi bi-cart"></i> Keranjang</a>
                     </li>
                     <?php if (isset($_SESSION['username'])): ?>
                         <li class="nav-item dropdown">
@@ -102,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <a class="nav-link" href="consumer/login.php">Login</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="register.php">Register</a>
+                            <a class="nav-link" href="consumer/register.php">Register</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="logout.php">Logout</a>
