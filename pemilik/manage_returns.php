@@ -228,12 +228,12 @@ th {
                                     <form method="post" action="manage_returns.php" style="display:inline;">
                                         <input type="hidden" name="return_id" value="<?= $return['id']; ?>">
                                         <input type="hidden" name="action" value="accept">
-                                        <button type="submit" class="btn btn-success">Terima</button>
+                                        <button type="submit" class="btn btn-success btn-sm">Terima</button>
                                     </form>
                                     <form method="post" action="manage_returns.php" style="display:inline;">
                                         <input type="hidden" name="return_id" value="<?= $return['id']; ?>">
                                         <input type="hidden" name="action" value="reject">
-                                        <button type="submit" class="btn btn-danger">Tolak</button>
+                                        <button type="submit" class="btn btn-danger btn-sm">Tolak</button>
                                     </form>
                                 <?php elseif ($return['status'] === 'approved'): ?>
                                     <span class="badge bg-success">Diterima</span>
@@ -243,7 +243,7 @@ th {
                                     <form method="post" action="manage_returns.php" style="display:inline;">
                                         <input type="hidden" name="return_id" value="<?= $return['id']; ?>">
                                         <input type="hidden" name="action" value="received">
-                                        <button type="submit" class="btn btn-primary">Terima Pengembalian</button>
+                                        <button type="submit" class="btn btn-primary btn-sm">Terima Pengembalian</button>
                                     </form>
                                 <?php elseif ($return['status'] === 'returned'): ?>
                                     <span class="badge bg-primary">Retur Diterima</span>

@@ -107,7 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_id'])) {
                 </ul>
                 <ul class="navbar-nav mb-2 mb-lg-0">
                     <li class="nav-item">
-                        <a class="nav-link" href="company_cart.php"><i class="bi bi-cart"></i> Keranjang</a>
+                        <a class="nav-link" href="cart.php"><i class="bi bi-cart"></i> Keranjang</a>
                     </li>
                     <?php if (isset($_SESSION['username'])): ?>
                         <li class="nav-item dropdown">
@@ -174,16 +174,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_id'])) {
                                 </form>
                             </td>
                             <td>
-                            <a class="btn btn-info btn-sm" href="view_company_order_detail.php?order_id=<?= $order['order_id'] ?>">Lihat Detail</a>
+                            <a class="btn btn-info btn-sm" href="view_company_order_detail.php?id=<?= $order['order_id'] ?>">Lihat Detail</a>
                                 <?php if ($order['status'] === 'shipped'): ?>
                                     <a class="btn btn-success btn-sm" href="complete_order.php?order_id=<?= $order['order_id'] ?>">Pesanan Selesai</a>
-                                    <a class="btn btn-danger btn-sm" href="return_request.php?order_id=<?= $order['order_id'] ?>">Ajukan Retur</a>
+                                    <a class="btn btn-danger btn-sm" href="company_return_request.php?order_id=<?= $order['order_id'] ?>">Ajukan Retur</a>
                                 <?php elseif ($order['status'] === 'return_pending'): ?>
                                     <span class="badge bg-warning text-dark">Retur Pending</span>
                                 <?php elseif ($order['status'] === 'return_rejected'): ?>
                                     <span class="badge bg-danger">Retur Ditolak</span>
+                                <?php elseif ($order['status'] === 'return_approved'): ?>
+                                    <a class="btn btn-danger btn-sm" href="company_return_form.php?order_id=<?= $order['order_id'] ?>">Retur Barang</a>
                                 <?php elseif ($order['status'] === 'return_accepted'): ?>
                                     <span class="badge bg-success">Retur Diterima</span>
+                                <?php elseif ($order['status'] === 'returned'): ?>
+                                    <span class="badge bg-success">Retur Barang Diterima</span>
                                 <?php elseif ($order['status'] === 'completed'): ?>
                                     <span class="badge bg-success">Selesai</span>
                                 <?php endif; ?>

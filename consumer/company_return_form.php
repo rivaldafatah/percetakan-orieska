@@ -8,61 +8,37 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-$user_id = $_SESSION['user_id'];
-$cart = isset($_SESSION['cart']) ? $_SESSION['cart'] : [];
+$order_id = $_GET['order_id'];
+
+// Ambil username dari sesi, pastikan bahwa session memiliki key 'username'
+$username = isset($_SESSION['username']) ? $_SESSION['username'] : '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $payment_method = $_POST['payment_method'];
-    $payment_proof = '';
+    $address = $_POST['address'];
+    $expedition = $_POST['expedition'];
 
-    // Menangani upload gambar bukti pembayaran jika ada
-    if (isset($_FILES['payment_proof']) && $_FILES['payment_proof']['error'] == UPLOAD_ERR_OK) {
-        $upload_dir = '../uploads/payment_proofs/';
-        $payment_proof = basename($_FILES['payment_proof']['name']);
-        $target_file = $upload_dir . $payment_proof;
-
-        // Memastikan direktori upload ada
-        if (!is_dir($upload_dir)) {
-            mkdir($upload_dir, 0777, true);
-        }
-
-        // Memindahkan file yang diupload ke direktori target
-        if (!move_uploaded_file($_FILES['payment_proof']['tmp_name'], $target_file)) {
-            die("Error uploading payment proof.");
-        }
-    }
-
-    // Menyimpan data pesanan ke database
-    $total = 0;
-    foreach ($cart as $item) {
-        $total += $item['price'] * $item['quantity'];
-    }
-
-    $stmt = $conn->prepare("INSERT INTO orders (user_id, payment_method, total, status, payment_proof) VALUES (?, ?, ?, 'pending', ?)");
+    // Update status pesanan dan simpan detail pengiriman retur
+    $stmt = $conn->prepare("UPDATE orders SET status = 'being_returned' WHERE id = ?");
     if ($stmt === false) {
-        die("Error preparing statement: " . htmlspecialchars($conn->error));
+        die('Prepare failed: ' . htmlspecialchars($conn->error));
     }
-    
-    $stmt->bind_param("isds", $user_id, $payment_method, $total, $payment_proof);
-    $stmt->execute();
-    $order_id = $stmt->insert_id;
-
-    // Menyimpan detail pesanan ke database
-    foreach ($cart as $item) {
-        $design_file = $item['design_file'];
-        $note = isset($item['note']) ? $item['note'] : '';
-        $stmt = $conn->prepare("INSERT INTO order_items (order_id, product_id, quantity, price, design_file, note) VALUES (?, ?, ?, ?, ?, ?)");
-        if ($stmt === false) {
-            die("Error preparing statement for order items: " . htmlspecialchars($conn->error));
-        }
-        $stmt->bind_param("iiisss", $order_id, $item['id'], $item['quantity'], $item['price'], $design_file, $note);
-        $stmt->execute();
+    $stmt->bind_param("i", $order_id);
+    if (!$stmt->execute()) {
+        die('Execute failed: ' . htmlspecialchars($stmt->error));
     }
+    $stmt->close();
 
-    // Mengosongkan keranjang belanja
-    unset($_SESSION['cart']);
+    $stmt = $conn->prepare("INSERT INTO return_shipments (order_id, sender_name, sender_address, expedition) VALUES (?, ?, ?, ?)");
+    if ($stmt === false) {
+        die('Prepare failed: ' . htmlspecialchars($conn->error));
+    }
+    $stmt->bind_param("isss", $order_id, $username, $address, $expedition);
+    if (!$stmt->execute()) {
+        die('Execute failed: ' . htmlspecialchars($stmt->error));
+    }
+    $stmt->close();
 
-    header('Location: company_order_success.php');
+    header('Location: company_order_history.php');
     exit();
 }
 ?>
@@ -70,25 +46,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <!-- Required meta tags -->
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Pembayaran Perusahaan</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Pengiriman Retur - Percetakan Orieska</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Custom CSS -->
-    <style>
-        .bank-logo {
-            width: 50px;
-            height: auto;
-            margin-right: 10px;
-        }
-        .payment-option {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-    </style>
 </head>
 <body>
     <!-- Navbar -->
@@ -152,29 +114,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </nav>
 
     <div class="container mt-5">
-        <h2 class="text-center">Checkout Perusahaan</h2>
-        <div class="card">
-            <div class="card-body">
-                <form method="post" action="company_checkout.php" enctype="multipart/form-data">
-                    <div class="mb-3">
-                        <label for="payment_method" class="form-label">Metode Pembayaran:</label>
-                        <select id="payment_method" name="payment_method" class="form-select">
-                            <option value="bri">Transfer Bank BRI (9083242834)</option>
-                            <option value="bca">Transfer Bank BCA (98324893248324)</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="payment_proof" class="form-label">Unggah Bukti Pembayaran (jpg, jpeg, png):</label>
-                        <input type="file" id="payment_proof" name="payment_proof" class="form-control" accept="image/jpeg,image/png">
-                    </div>
-                    <button type="submit" class="btn btn-primary">Proses Checkout</button>
-                </form>
-                <a href="company_cart.php" class="btn btn-secondary mt-3">Kembali ke Keranjang</a>
+        <h2 class="text-center">Form Pengiriman Retur</h2>
+        <form method="post" action="return_form.php?order_id=<?= $order_id ?>">
+            <div class="mb-3">
+                <label for="username" class="form-label">Nama Pengirim</label>
+                <input type="text" class="form-control" id="username" name="username" value="<?= htmlspecialchars($username) ?>" readonly>
             </div>
-        </div>
+            <div class="mb-3">
+                <label for="address" class="form-label">Alamat Pengirim</label>
+                <textarea class="form-control" id="address" name="address" required></textarea>
+            </div>
+            <div class="mb-3">
+                <label for="expedition" class="form-label">Ekspedisi Pengiriman</label>
+                <select class="form-select" id="expedition" name="expedition" required>
+                    <option value="jnt">JNT</option>
+                    <option value="jne">JNE</option>
+                    <option value="anteraja">Anteraja</option>
+                    <option value="ambil_ditempat">Ambil Ditempat</option>
+                </select>
+                <small class="form-text text-muted">Jika masih berada di kawasan kota Bandung, bisa pilih ambil ditempat.</small>
+            </div>
+            <button type="submit" class="btn btn-primary">Kirim</button>
+        </form>
     </div>
 
-    <!-- Bootstrap JS and dependencies -->
+    <!-- Bootstrap JS dan dependensi -->
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
 </body>

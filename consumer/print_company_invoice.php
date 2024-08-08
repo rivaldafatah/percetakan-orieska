@@ -211,7 +211,7 @@ $order_items = $result->fetch_all(MYSQLI_ASSOC);
         <?php else: ?>
             <p><strong>Bukti Pembayaran:</strong> Belum ada bukti pembayaran.</p>
         <?php endif; ?>
-        <p><a class="btn btn-secondary" href="order_history.php">Kembali</a></p>
+        <p><a class="btn btn-secondary" href="company_order_history.php">Kembali</a></p>
     </div>
     <!-- Bootstrap JS and dependencies -->
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>

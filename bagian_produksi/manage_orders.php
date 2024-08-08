@@ -157,8 +157,8 @@ $orders = $result->fetch_all(MYSQLI_ASSOC);
                     <td>Rp <?= number_format($order['total'], 2, ',', '.') ?></td>
                     <td><?= $order['status'] ?></td>
                     <td>
-                        <a class="btn btn-primary" href="view_order.php?id=<?= $order['id'] ?>" role="button">Lihat Detail</a>
-                        <a class="btn btn-warning" href="update_status.php?id=<?= $order['id'] ?>&status=production" role="button">Update Status Produksi</a>
+                        <a class="btn btn-primary btn-sm" href="view_order.php?id=<?= $order['id'] ?>" role="button">Lihat Detail</a>
+                        <a class="btn btn-warning btn-sm" href="update_status.php?id=<?= $order['id'] ?>&status=production" role="button">Update Status Produksi</a>
                     </td>
                 </tr>
                 <?php endforeach; ?>

@@ -174,6 +174,7 @@ $orders = $result->fetch_all(MYSQLI_ASSOC);
                     <td>
                         <a class="btn btn-primary btn-sm" href="view_company_order.php?id=<?= $order['id'] ?>" role="button">Lihat Detail</a>
                         <a class="btn btn-secondary btn-sm" href="update_status.php?id=<?= $order['id'] ?>&status=approved" role="button">Update Status Setujui</a>
+                        <a class="btn btn-danger btn-sm" href="reject_order.php?id=<?= $order['id'] ?>" role="button">Tolak</a>
                     </td>
                 </tr>
                 <?php endforeach; ?>

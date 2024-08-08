@@ -6,7 +6,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = $_POST['username'];
     $password = $_POST['password'];
 
+    // Mengambil data pengguna dari database berdasarkan username dan role 'company'
     $stmt = $conn->prepare("SELECT * FROM users WHERE username = ? AND role = 'company'");
+    if ($stmt === false) {
+        die("Error preparing statement: " . htmlspecialchars($conn->error));
+    }
+
     $stmt->bind_param("s", $username);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -14,10 +19,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($user && password_verify($password, $user['password'])) {
         $_SESSION['user_id'] = $user['id'];
+        $_SESSION['username'] = $user['username'];  // Simpan username ke dalam sesi
         $_SESSION['role'] = $user['role'];
         header('Location: company_catalog.php');
+        exit();
     } else {
-        $error = "Username atau password salah";
+        $error = "Username atau password salah.";
     }
 }
 ?>

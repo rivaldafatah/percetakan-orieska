@@ -196,6 +196,7 @@ $orders = $result->fetch_all(MYSQLI_ASSOC);
                         <a class="btn btn-warning btn-sm" href="update_status.php?id=<?= $order['id'] ?>&status=production" role="button">Update Status Produksi</a>
                         <a class="btn btn-info btn-sm" href="update_status.php?id=<?= $order['id'] ?>&status=shipped" role="button">Update Status Kirim</a>
                         <a class="btn btn-success btn-sm" href="update_status.php?id=<?= $order['id'] ?>&status=completed" role="button">Update Status Selesai</a>
+                        <a class="btn btn-danger btn-sm" href="reject_order.php?id=<?= $order['id'] ?>" role="button">Tolak</a>
                     </td>
                 </tr>
                 <?php endforeach; ?>
