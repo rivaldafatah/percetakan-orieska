@@ -125,30 +125,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="collapse navbar-collapse" id="navbarNavDropdown">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item">
-                        <a class="nav-link" aria-current="page" href="#">Beranda</a>
+                        <a class="nav-link" aria-current="page" href="../index.php">Beranda</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">Layanan Vendor</a>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="katalogDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            Katalog
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="katalogDropdown">
-                            <li><a class="dropdown-item" href="#">Banner</a></li>
-                            <li><a class="dropdown-item" href="#">Buku</a></li>
-                            <li><a class="dropdown-item" href="#">Plakat</a></li>
-                            <li><a class="dropdown-item" href="#">Stiker</a></li>
-                            <li><a class="dropdown-item" href="#">Kartu Nama</a></li>
-                        </ul>
+                        <a class="nav-link" href="../layanan.php">Layanan Vendor</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">Tentang</a>
+                        <a class="nav-link" href="catalog.php">Katalog</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="../about.php">Tentang</a>
                     </li>
                 </ul>
                 <ul class="navbar-nav mb-2 mb-lg-0">
                     <li class="nav-item">
                         <a class="nav-link" href="cart.php"><i class="bi bi-cart"></i> Keranjang</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="order_history.php"><i class="material-icons"></i> Riwayat</a>
                     </li>
                     <?php if (isset($_SESSION['username'])): ?>
                         <li class="nav-item dropdown">
