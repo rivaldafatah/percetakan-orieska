@@ -42,6 +42,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_notes'])) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
+    <!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">Percetakan Orieska</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNavDropdown">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link" aria-current="page" href="../index.php">Beranda</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="../layanan.php">Layanan Vendor</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="company_catalog.php">Katalog</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="../about.php">Tentang</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link" href="company_cart.php"><i class="bi bi-cart"></i> Keranjang</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="company_order_history.php"><i class="material-icons"></i> Riwayat</a>
+                    </li>
+                    <?php if (isset($_SESSION['username'])): ?>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <?= htmlspecialchars($_SESSION['username']); ?>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                <li><a class="dropdown-item" href="company_logout.php">Logout</a></li>
+                            </ul>
+                        </li>
+                    <?php else: ?>
+                        <li class="nav-item">
+                            <a class="nav-link" href="login.php">Login</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="register.php">Register</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="company_logout.php">Logout</a>
+                        </li>
+                    <?php endif; ?>
+                </ul>
+            </div>
+        </div>
+    </nav>
     <div class="container mt-5">
         <div class="row justify-content-center">
             <div class="col-md-8">
