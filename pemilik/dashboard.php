@@ -184,6 +184,21 @@ $total_products = $result->fetch_assoc()['total_products'];
                     <li class="nav-item">
                         <a class="nav-link" href="manage_returns.php">Pengembalian</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="company_register.php">Daftar Akun Perusahaan</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Kelola Akun Konsumen
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="manage_accounts.php">Akun Perorangan</a></li>
+                            <li><a class="dropdown-item" href="manage_company_accounts.php">Akun Perusahaan</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="manage_users.php">Kelola Semua Akun</a>
+                    </li>
                 </ul>
             </div>
         </div>

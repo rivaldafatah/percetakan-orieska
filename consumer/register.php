@@ -1,13 +1,47 @@
 <?php
 session_start();
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+require '../vendor/autoload.php';
 include '../includes/db.php';
 
 $success = "";
+
+function sendVerificationEmail($email, $verificationCode) {
+  $mail = new PHPMailer(true);
+
+  try {
+      //Server settings
+      $mail->isSMTP();
+      $mail->Host = 'smtp.gmail.com';  // Set your SMTP server
+      $mail->SMTPAuth = true;
+      $mail->Username = 'dalexganteng@gmail.com'; // SMTP username
+      $mail->Password = 'ayeh afnp pkeb kpoe'; // SMTP password
+      $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+      $mail->Port = 587;
+
+      //Recipients
+      $mail->setFrom('your-email@gmail.com', 'Percetakan Orieska');
+      $mail->addAddress($email);
+
+      // Content
+      $mail->isHTML(true);
+      $mail->Subject = 'Email Verification';
+      $mail->Body    = "Click the link below to verify your email:<br><a href='http://localhost/percetakan-orieska/consumer/verify.php?code=$verificationCode'>Verify Email</a>";
+
+      $mail->send();
+      return true;
+  } catch (Exception $e) {
+      return false;
+  }
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = $_POST['username'];
     $email = $_POST['email'];
     $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
+    $verificationCode = md5(uniqid(rand(), true));
 
     // Periksa apakah username atau email sudah ada di database
     $stmt = $conn->prepare("SELECT * FROM users WHERE username = ? OR email = ?");
@@ -18,15 +52,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = "Username atau email sudah digunakan.";
     } else {
         // Masukkan data pengguna baru ke database
-        $stmt = $conn->prepare("INSERT INTO users (username, password, email, role) VALUES (?, ?, ?, 'individual')");
+        $stmt = $conn->prepare("INSERT INTO users (username, password, email, role, verification_code) VALUES (?, ?, ?, 'individual', ?)");
         if ($stmt === false) {
             die("Error preparing statement: " . htmlspecialchars($conn->error));
         }
-        $stmt->bind_param("sss", $username, $password, $email);
+        $stmt->bind_param("ssss", $username, $password, $email, $verificationCode);
         $stmt->execute();
-        $success = "Akun berhasil didaftarkan. Silakan login.";
-        // header('Location: login.php');
-        // exit();
+
+        if (sendVerificationEmail($email, $verificationCode)) {
+            $success = "Akun berhasil didaftarkan. Silakan cek email Anda untuk verifikasi.";
+        } else {
+            $error = "Gagal mengirim email verifikasi.";
+        }
     }
 }
 ?>
@@ -35,7 +72,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html>
 <head>
     <script>
-        // Tampilkan pesan alert jika ada pesan sukses
         function showAlert(message) {
             alert(message);
         }
@@ -44,61 +80,61 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register - Percetakan Orieska</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    body, html {
-      height: 100%;
-      background-color: #343a40;
-    }
-    .bg-image {
-      background-image: url('gambar/pexels-jplenio-1103970.jpg'); /* Ganti dengan jalur gambar lokal Anda */
-      background-size: cover;
-      background-position: center;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .form-container {
-      background: rgba(255, 255, 255, 0.9);
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    }
-  </style>
+    <style>
+        body, html {
+            height: 100%;
+            background-color: #343a40;
+        }
+        .bg-image {
+            background-image: url('gambar/pexels-jplenio-1103970.jpg'); /* Ganti dengan jalur gambar lokal Anda */
+            background-size: cover;
+            background-position: center;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .form-container {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+    </style>  
 </head>
 <body>
     <div class="bg-image">
-    <div class="container">
-      <div class="row justify-content-center">
-        <div class="col-md-6">
-          <div class="form-container">
-            <h2 class="mb-4 text-center">Daftar</h2>
-            <form method="post" action="register.php">
-              <?php if (isset($error)) { echo "<p>$error</p>"; } ?>
-              <?php if ($success) { echo "<script>showAlert('$success');</script>"; } ?>
-              <div class="mb-3">
-                <label for="username" class="form-label">Username</label>
-                <input type="text" class="form-control" name="username" placeholder="Masukan Username" required>
-              </div>
-              <div class="mb-3">
-                <label for="email" class="form-label">Email</label>
-                <input type="email" class="form-control" name="email" placeholder="Masukan Email" required>
-              </div>
-              <div class="mb-3">
-                <label for="password" class="form-label">Password</label>
-                <input type="password" class="form-control" name="password" placeholder="Masukan Password" required>
-              </div>
-              <button type="submit" class="btn btn-primary w-100">Daftar</button>
-            </form>
-            <div class="mt-3 text-center">
-              <p>Sudah punya akun? <a href="login.php">Klik login disini</a></p>
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <div class="form-container">
+                        <h2 class="mb-4 text-center">Daftar</h2>
+                        <form method="post" action="register.php">
+                            <?php if (isset($error)) { echo "<p>$error</p>"; } ?>
+                            <?php if ($success) { echo "<script>showAlert('$success');</script>"; } ?>
+                            <div class="mb-3">
+                                <label for="username" class="form-label">Username</label>
+                                <input type="text" class="form-control" name="username" placeholder="Masukan Username" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" name="email" placeholder="Masukan Email" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Password</label>
+                                <input type="password" class="form-control" name="password" placeholder="Masukan Password" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Daftar</button>
+                        </form>
+                        <div class="mt-3 text-center">
+                            <p>Sudah punya akun? <a href="login.php">Klik login disini</a></p>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
         </div>
-      </div>
     </div>
-  </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
