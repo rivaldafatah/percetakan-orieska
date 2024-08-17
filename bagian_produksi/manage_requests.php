@@ -146,7 +146,7 @@ th {
             </tr>
             <?php foreach ($requests as $request): ?>
                 <tr>
-                    <td><?= $request['id'] ?></td>
+                    <td><?= $request['request_code'] ?></td>
                     <td><?= $request['material_name'] ?></td>
                     <td><?= $request['quantity'] ?></td>
                     <td><?= $request['unit'] ?></td>

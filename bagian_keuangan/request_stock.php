@@ -12,13 +12,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $quantity = $_POST['quantity'];
     $unit = $_POST['unit'];
 
-    $stmt = $conn->prepare("INSERT INTO requests (material_name, quantity, unit) VALUES (?, ?, ?)");
-    $stmt->bind_param("sis", $material_name, $quantity, $unit);
+    // Generate request code
+    $prefix = "REQ-";
+    $stmt = $conn->prepare("SELECT COUNT(id) AS total_requests FROM requests");
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+    $total_requests = $row['total_requests'] + 1;
+    $request_code = $prefix . str_pad($total_requests, 5, '0', STR_PAD_LEFT);
+
+    // Insert request into database
+    $stmt = $conn->prepare("INSERT INTO requests (material_name, quantity, unit, request_code) VALUES (?, ?, ?, ?)");
+    if ($stmt === false) {
+        die("Error preparing statement: " . htmlspecialchars($conn->error));
+    }
+    $stmt->bind_param("siss", $material_name, $quantity, $unit, $request_code);
     $stmt->execute();
 
-    $success = "Permintaan stok berhasil dibuat.";
+    $success = "Permintaan stok berhasil dibuat dengan kode " . $request_code;
 }
-
 ?>
 
 <!DOCTYPE html>

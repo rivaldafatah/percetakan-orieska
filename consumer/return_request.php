@@ -2,12 +2,6 @@
 session_start();
 include '../includes/db.php';
 
-// Pastikan pengguna sudah login
-if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
-    exit();
-}
-
 $order_id = $_GET['order_id'];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -19,12 +13,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $target_file = $target_dir . basename($proof_image);
     move_uploaded_file($_FILES['proof_image']['tmp_name'], $target_file);
 
-    $stmt = $conn->prepare("INSERT INTO returns (order_id, user_id, reason, proof_image, status) VALUES (?, ?, ?, ?, 'pending')");
-    $stmt->bind_param("iiss", $order_id, $_SESSION['user_id'], $reason, $proof_image);
+    // Buat return_code dengan format RET-00001
+    $stmt = $conn->prepare("SELECT MAX(id) AS max_id FROM returns");
+    if (!$stmt) {
+        die("Error preparing statement: " . htmlspecialchars($conn->error));  // Menampilkan error jika terjadi kesalahan
+    }
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+    $max_id = $row['max_id'];
+    $new_id = $max_id + 1;
+    $return_code = "RTR-" . str_pad($new_id, 5, "0", STR_PAD_LEFT);
+
+    // Simpan data retur ke database termasuk return_code
+    $stmt = $conn->prepare("INSERT INTO returns (order_id, user_id, reason, proof_image, status, retur_code) VALUES (?, ?, ?, ?, 'pending', ?)");
+    if (!$stmt) {
+        die("Error preparing insert statement: " . htmlspecialchars($conn->error));  // Menampilkan error jika terjadi kesalahan
+    }
+    $stmt->bind_param("iisss", $order_id, $_SESSION['user_id'], $reason, $proof_image, $return_code);
     $stmt->execute();
 
     // Update status pesanan menjadi 'return_pending'
     $stmt = $conn->prepare("UPDATE orders SET status = 'return_pending' WHERE id = ?");
+    if (!$stmt) {
+        die("Error preparing update statement: " . htmlspecialchars($conn->error));  // Menampilkan error jika terjadi kesalahan
+    }
     $stmt->bind_param("i", $order_id);
     $stmt->execute();
 
@@ -32,6 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit();
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="id">

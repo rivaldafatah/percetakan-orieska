@@ -87,7 +87,7 @@ if (!$request) {
                                 <h2>Percetakan Orieska</h2>
                             </td>
                             <td>
-                                Permintaan Stok #: <?= $request['id'] ?><br>
+                                Permintaan Stok #: <?= $request['request_code'] ?><br>
                                 Tanggal: <?= $request['request_date'] ?>
                             </td>
                         </tr>

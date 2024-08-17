@@ -14,16 +14,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_inventory'])) {
     $description = $_POST['description'];
     $quantity = $_POST['quantity'];
 
-    $stmt = $conn->prepare("INSERT INTO inventory (name, description, quantity) VALUES (?, ?, ?)");
+    // Generate kode bahan
+    $prefix = "BHN-";
+    $stmt = $conn->prepare("SELECT COUNT(id) AS total_inventory FROM inventory");
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+    $total_inventory = $row['total_inventory'] + 1;
+    $material_code = $prefix . str_pad($total_inventory, 5, '0', STR_PAD_LEFT);
+
+    // Menyimpan data bahan baku ke database
+    $stmt = $conn->prepare("INSERT INTO inventory (name, description, quantity, material_code) VALUES (?, ?, ?, ?)");
     if ($stmt === false) {
         die("Error preparing statement: " . htmlspecialchars($conn->error));
     }
-    $stmt->bind_param("ssi", $name, $description, $quantity);
+    $stmt->bind_param("ssis", $name, $description, $quantity, $material_code);
     $stmt->execute();
+
     header('Location: manage_inventory.php');
     exit();
 }
 ?>
+
 
 <!DOCTYPE html>
 <html>
@@ -88,7 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_inventory'])) {
 </head>
 <body>
     <!-- Navbar -->
-  <nav class="navbar navbar-dark bg-dark">
+<nav class="navbar navbar-dark bg-dark">
         <div class="container-fluid">
             <a class="navbar-brand" href="#">Bagian Produksi Dashboard</a>
             <div class="d-flex">
@@ -131,6 +143,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_inventory'])) {
         </div>
 
         <div class="content">
+        <h2>Tambah Bahan Baku</h2>
         <form method="post" action="add_inventory.php" enctype="multipart/form-data">
             <div class="mb-3">
                 <label for="name" class="form-label">Nama Bahan Baku:</label>

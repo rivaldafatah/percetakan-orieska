@@ -42,6 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $total += $item['price'] * $item['quantity'];
     }
 
+    // Insert order baru tanpa kode
     $stmt = $conn->prepare("INSERT INTO orders (user_id, address, shipping_method, payment_method, total, status, payment_proof) VALUES (?, ?, ?, ?, ?, 'pending', ?)");
     if ($stmt === false) {
         die("Error preparing statement: " . htmlspecialchars($conn->error));
@@ -50,6 +51,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt->bind_param("isssds", $user_id, $address, $shipping_method, $payment_method, $total, $payment_proof);
     $stmt->execute();
     $order_id = $stmt->insert_id;
+
+    // Generate kode order dengan format ORD-00001
+    $order_code = 'ORD-' . str_pad($order_id, 5, '0', STR_PAD_LEFT);
+
+    // Update order dengan kode order
+    $stmt = $conn->prepare("UPDATE orders SET order_code = ? WHERE id = ?");
+    if ($stmt === false) {
+        die("Error preparing statement: " . htmlspecialchars($conn->error));
+    }
+    $stmt->bind_param("si", $order_code, $order_id);
+    $stmt->execute();
 
     // Menyimpan detail pesanan ke database
     foreach ($cart as $item) {

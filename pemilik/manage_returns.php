@@ -37,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Mengambil daftar pengembalian dari database
-$stmt = $conn->prepare("SELECT returns.*, orders.user_id, users.username FROM returns 
+$stmt = $conn->prepare("SELECT returns.*, orders.user_id, orders.order_code, users.username FROM returns 
                         JOIN orders ON returns.order_id = orders.id 
                         JOIN users ON orders.user_id = users.id");
 $stmt->execute();
@@ -222,8 +222,8 @@ th {
                 <tbody>
                     <?php foreach ($returns as $return): ?>
                         <tr>
-                            <td><?= htmlspecialchars($return['id']); ?></td>
-                            <td><?= htmlspecialchars($return['order_id']); ?></td>
+                            <td><?= htmlspecialchars($return['retur_code']); ?></td>
+                            <td><?= htmlspecialchars($return['order_code']); ?></td>
                             <td><?= htmlspecialchars($return['username']); ?></td>
                             <td><?= htmlspecialchars($return['reason']); ?></td>
                             <td><center>

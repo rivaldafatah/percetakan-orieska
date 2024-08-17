@@ -112,7 +112,7 @@ $order_items = $result->fetch_all(MYSQLI_ASSOC);
                                 <h2>Percetakan Orieska</h2>
                             </td>
                             <td>
-                                Faktur #: <?= htmlspecialchars($order['id']) ?><br>
+                                Faktur #: <?= htmlspecialchars($order['order_code']) ?><br>
                                 Dibuat: <?= date('d-m-Y', strtotime($order['created_at'])) ?><br>
                                 Status: 
                                 <?php if ($order['status'] === 'pending'): ?>

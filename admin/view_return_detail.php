@@ -11,7 +11,12 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
 $order_id = $_GET['order_id'];
 
 // Mengambil detail pengiriman pengembalian dari tabel return_shipments dan status dari tabel orders
-$stmt = $conn->prepare("SELECT rs.*, o.status AS order_status FROM return_shipments rs JOIN orders o ON rs.order_id = o.id WHERE rs.order_id = ?");
+$stmt = $conn->prepare("
+    SELECT rs.*, o.order_code, o.status AS order_status 
+    FROM return_shipments rs 
+    JOIN orders o ON rs.order_id = o.id 
+    WHERE rs.order_id = ?
+");
 $stmt->bind_param("i", $order_id);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -211,11 +216,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <table class="table table-bordered">
                 <tr>
                     <th>ID Pengembalian</th>
-                    <td><?= htmlspecialchars($return_shipment['id']); ?></td>
+                    <td><?= htmlspecialchars($return_shipment['reship_code']); ?></td>
                 </tr>
                 <tr>
                     <th>Order ID</th>
-                    <td><?= htmlspecialchars($return_shipment['order_id']); ?></td>
+                    <td><?= htmlspecialchars($return_shipment['order_code']); ?></td>
                 </tr>
                 <tr>
                     <th>Nama Pengirim</th>
@@ -236,7 +241,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </table>
             <?php if ($return_shipment['order_status'] === 'being_returned'): ?>
                 <form method="post" action="view_return_detail.php?order_id=<?= $order_id; ?>">
-                    <input type="hidden" name="return_id" value="<?= $return_shipment['id']; ?>">
+                    <input type="hidden" name="reship_code" value="<?= $return_shipment['reship_code']; ?>">
                     <button type="submit" class="btn btn-success">Tandai Sebagai Diterima</button>
                 </form>
             <?php endif; ?>

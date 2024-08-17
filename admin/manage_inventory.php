@@ -177,7 +177,7 @@ $inventories = $result->fetch_all(MYSQLI_ASSOC);
         <table>
             <thead>
                 <tr>
-                    <th>ID</th>
+                    <th>Kode Bahan</th>
                     <th>Nama</th>
                     <th>Deskripsi</th>
                     <th>Jumlah</th>
@@ -189,7 +189,7 @@ $inventories = $result->fetch_all(MYSQLI_ASSOC);
             <tbody>
                 <?php foreach ($inventories as $inventory): ?>
                 <tr>
-                    <td><?= $inventory['id'] ?></td>
+                    <td><?= $inventory['material_code'] ?></td>
                     <td><?= $inventory['name'] ?></td>
                     <td><?= $inventory['description'] ?></td>
                     <td><?= $inventory['quantity'] ?></td>

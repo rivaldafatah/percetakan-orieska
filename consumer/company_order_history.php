@@ -11,7 +11,7 @@ if (!isset($_SESSION['user_id'])) {
 $user_id = $_SESSION['user_id'];
 
 // Mengambil data pesanan dari database dan mengurutkan berdasarkan order_id dalam urutan menurun
-$stmt = $conn->prepare("SELECT orders.id AS order_id, orders.total, orders.status, 
+$stmt = $conn->prepare("SELECT orders.id AS order_id, orders.order_code, orders.total, orders.status, 
                         orders.tracking_number, order_items.product_id, order_items.quantity, 
                         order_items.note, products.name AS product_name, orders.payment_proof
                         FROM orders 
@@ -136,7 +136,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_id'])) {
             <table class="table table-bordered">
                 <thead>
                     <tr>
-                        <th>Order ID</th>
+                        <th>Kode Pesanan</th>
                         <th>Nama Produk</th>
                         <th>Quantity</th>
                         <th>Total Harga</th>
@@ -150,7 +150,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_id'])) {
                 <tbody>
                     <?php foreach ($orders as $order): ?>
                         <tr>
-                            <td><?= htmlspecialchars($order['order_id']); ?></td>
+                            <td><?= htmlspecialchars($order['order_code']); ?></td>
                             <td><?= htmlspecialchars($order['product_name']); ?></td>
                             <td><?= htmlspecialchars($order['quantity']); ?></td>
                             <td>Rp <?= number_format($order['total'], 2, ',', '.'); ?></td>

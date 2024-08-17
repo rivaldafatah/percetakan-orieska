@@ -20,18 +20,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $price = $_POST['price'];
     $estimasi_pengerjaan = $_POST['estimasi_pengerjaan'];
     $min_order = $_POST['min_order'];
+    $company = $_POST['company']; // Tambahkan ini
     $image = $_FILES['image']['name'];
 
+    // Hapus semua titik sebelum mengkonversi ke float
+    $price = str_replace('.', '', $price);
+
+    // Ubah ke desimal
+    $price = floatval($price);
+
+    // Handle image upload
     $target_dir = "../uploads/products/";
     $target_file = $target_dir . basename($image);
     move_uploaded_file($_FILES['image']['tmp_name'], $target_file);
 
-    $stmt = $conn->prepare("INSERT INTO products (name, description, price, estimasi_pengerjaan, min_order, image) VALUES (?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("ssdsds", $name, $description, $price, $estimasi_pengerjaan, $min_order, $image);
+    // Generate product code
+    $prefix = "PRD-";
+    $stmt = $conn->prepare("SELECT COUNT(id) AS total_products FROM products");
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+    $total_products = $row['total_products'] + 1;
+    $product_code = $prefix . str_pad($total_products, 5, '0', STR_PAD_LEFT);
+
+    // Insert product into database
+    $stmt = $conn->prepare("INSERT INTO products (name, description, price, estimasi_pengerjaan, min_order, image, product_code, company) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    if ($stmt === false) {
+        die("Error preparing statement: " . htmlspecialchars($conn->error));
+    }
+    $stmt->bind_param("ssdsdssi", $name, $description, $price, $estimasi_pengerjaan, $min_order, $image, $product_code, $company);
     $stmt->execute();
     
     $product_id = $stmt->insert_id;
 
+    // Insert associated materials
     if (isset($_POST['materials'])) {
         $materials = $_POST['materials'];
         foreach ($materials as $material_id) {
@@ -44,7 +66,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header('Location: manage_products.php');
     exit();
 }
+
 ?>
+
 
 <!DOCTYPE html>
 <html>
@@ -108,83 +132,86 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </style>
 </head>
 <body>
- <!-- Navbar -->
- <nav class="navbar navbar-dark bg-dark">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="#">Pemilik Dashboard</a>
-            <div class="d-flex">
-                <div class="navbar-text text-white me-3">
-                    Logged in as: <strong><?php echo htmlspecialchars($_SESSION['username']); ?></strong>
-                </div>
-                <a class="btn btn-outline-light" href="logout.php">Logout</a>
+<!-- Navbar -->
+<nav class="navbar navbar-dark bg-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#">Admin Dashboard</a>
+        <div class="d-flex">
+            <div class="navbar-text text-white me-3">
+                Logged in as: <strong><?php echo htmlspecialchars($_SESSION['username']); ?></strong>
             </div>
+            <a class="btn btn-outline-light" href="logout.php">Logout</a>
         </div>
-    </nav>
-    <div class="main-content">
-        <div class="sidebar">
-            <div class="p-3">
-                <h4>Menu</h4>
-                <ul class="nav flex-column">
-                    <li class="nav-item">
-                        <a class="nav-link active" aria-current="page" href="dashboard.php">Dashboard</a>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            Produk
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <li><a class="dropdown-item" href="manage_products.php">List Produk</a></li>
-                            <li><a class="dropdown-item" href="add_product.php">Tambah Produk</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            Manajemen Stok
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <li><a class="dropdown-item" href="manage_inventory.php">Stok Bahan</a></li>
-                            <li><a class="dropdown-item" href="manage_requests.php">Cetak</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            Pengeluaran
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <li><a class="dropdown-item" href="manage_expenses.php">Laporan Pengeluaran</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            Pesanan Konsumen
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <li><a class="dropdown-item" href="manage_orders.php">Konsumen Perorangan</a></li>
-                            <li><a class="dropdown-item" href="manage_company_orders.php">Konsumen Perusahaan</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="manage_returns.php">Pengembalian</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="company_register.php">Daftar Akun Perusahaan</a>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            Kelola Akun Konsumen
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <li><a class="dropdown-item" href="manage_accounts.php">Akun Perorangan</a></li>
-                            <li><a class="dropdown-item" href="manage_company_accounts.php">Akun Perusahaan</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="manage_users.php">Kelola Semua Akun</a>
-                    </li>
-                </ul>
-            </div>
+    </div>
+</nav>
+<div class="main-content">
+    <div class="sidebar">
+        <div class="p-3">
+            <h4>Menu</h4>
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link active" aria-current="page" href="dashboard.php">Dashboard</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Produk
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <li><a class="dropdown-item" href="manage_products.php">List Produk</a></li>
+                        <li><a class="dropdown-item" href="add_product.php">Tambah Produk</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Manajemen Stok
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <li><a class="dropdown-item" href="manage_inventory.php">Stok Bahan</a></li>
+                        <li><a class="dropdown-item" href="add_inventory.php">Tambah Bahan Baku</a></li>
+                        <li><a class="dropdown-item" href="request_stock.php">Permintaan Bahan Baku</a></li>
+                        <li><a class="dropdown-item" href="manage_requests.php">Cetak</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Pengeluaran
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <li><a class="dropdown-item" href="input_expense.php">Tambah Pengeluaran</a></li>
+                        <li><a class="dropdown-item" href="manage_expenses.php">Laporan Pengeluaran</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Pesanan Konsumen
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <li><a class="dropdown-item" href="manage_orders.php">Konsumen Perorangan</a></li>
+                        <li><a class="dropdown-item" href="manage_company_orders.php">Konsumen Perusahaan</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="manage_returns.php">Pengembalian</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="company_register.php">Daftar Akun Perusahaan</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Kelola Akun Konsumen
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <li><a class="dropdown-item" href="manage_accounts.php">Akun Perorangan</a></li>
+                        <li><a class="dropdown-item" href="manage_company_accounts.php">Akun Perusahaan</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="manage_users.php">Kelola Semua Akun</a>
+                </li>
+            </ul>
         </div>
-        <div class="content">
+    </div>
+    <div class="content">
         <h2>Tambah Produk Baru</h2>
         <form method="post" action="add_product.php" enctype="multipart/form-data">
             <div class="mb-3">
@@ -197,7 +224,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             <div class="mb-3">
                 <label class="form-label">Harga:</label>
-                <input type="number" class="form-control" step="0.01" name="price" required>
+                <input type="number" class="form-control" step="0.01" name="price" oninput="formatNumber(this)" required>
             </div>
             <div class="mb-3">
                 <label class="form-label">Estimasi Pengerjaan:</label>
@@ -210,6 +237,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="mb-3">
                 <label class="form-label">Gambar:</label>
                 <input type="file" class="form-control" name="image" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Target Konsumen:</label>
+                    <select class="form-select" name="company" required>
+                    <option value="0">Konsumen Biasa</option>
+                    <option value="1">Konsumen Perusahaan</option>
+                </select>
             </div>
             <div id="materials-container">
                 <div class="mb-3">
@@ -250,5 +284,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <!-- Bootstrap JS and dependencies -->
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
+
+<script>
+        function formatNumber(input) {
+        let value = input.value.replace(/\./g, ''); // Hapus titik
+        let formattedValue = new Intl.NumberFormat('id-ID').format(value); // Format angka dengan pemisah ribuan
+        input.value = formattedValue;
+}
+
+
+    </script>
 </body>
 </html>

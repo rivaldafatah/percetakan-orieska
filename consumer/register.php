@@ -9,61 +9,66 @@ include '../includes/db.php';
 $success = "";
 
 function sendVerificationEmail($email, $verificationCode) {
-  $mail = new PHPMailer(true);
+    $mail = new PHPMailer(true);
 
-  try {
-      //Server settings
-      $mail->isSMTP();
-      $mail->Host = 'smtp.gmail.com';  // Set your SMTP server
-      $mail->SMTPAuth = true;
-      $mail->Username = 'dalexganteng@gmail.com'; // SMTP username
-      $mail->Password = 'ayeh afnp pkeb kpoe'; // SMTP password
-      $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-      $mail->Port = 587;
+    try {
+        // Server settings
+        $mail->isSMTP();
+        $mail->Host = 'smtp.gmail.com';  // Set your SMTP server
+        $mail->SMTPAuth = true;
+        $mail->Username = 'dalexganteng@gmail.com'; // SMTP username
+        $mail->Password = 'ayeh afnp pkeb kpoe'; // SMTP password
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port = 587;
 
-      //Recipients
-      $mail->setFrom('your-email@gmail.com', 'Percetakan Orieska');
-      $mail->addAddress($email);
+        // Recipients
+        $mail->setFrom('your-email@gmail.com', 'Percetakan Orieska');
+        $mail->addAddress($email);
 
-      // Content
-      $mail->isHTML(true);
-      $mail->Subject = 'Email Verification';
-      $mail->Body    = "Click the link below to verify your email:<br><a href='http://localhost/percetakan-orieska/consumer/verify.php?code=$verificationCode'>Verify Email</a>";
+        // Content
+        $mail->isHTML(true);
+        $mail->Subject = 'Verifikasi Email Perusahaan';
+        $mail->Body    = "Klik link di bawah ini untuk memverifikasi email perusahaan Anda:<br><a href='http://localhost/percetakan-orieska/consumer/verify.php?code=$verificationCode'>Verifikasi Email</a>";
 
-      $mail->send();
-      return true;
-  } catch (Exception $e) {
-      return false;
-  }
+        $mail->send();
+        return true;
+    } catch (Exception $e) {
+        return false;
+    }
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = $_POST['username'];
-    $email = $_POST['email'];
     $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
+    $email = $_POST['email'];
     $verificationCode = md5(uniqid(rand(), true));
 
-    // Periksa apakah username atau email sudah ada di database
-    $stmt = $conn->prepare("SELECT * FROM users WHERE username = ? OR email = ?");
-    $stmt->bind_param("ss", $username, $email);
+    // Insert new user to get the ID
+    $stmt = $conn->prepare("INSERT INTO users (username, password, email, role, verification_code) VALUES (?, ?, ?, 'individual', ?)");
+    if ($stmt === false) {
+        die("Error preparing statement: " . htmlspecialchars($conn->error));
+    }
+    $stmt->bind_param("ssss", $username, $password, $email, $verificationCode);
     $stmt->execute();
-    $result = $stmt->get_result();
-    if ($result->num_rows > 0) {
-        $error = "Username atau email sudah digunakan.";
-    } else {
-        // Masukkan data pengguna baru ke database
-        $stmt = $conn->prepare("INSERT INTO users (username, password, email, role, verification_code) VALUES (?, ?, ?, 'individual', ?)");
-        if ($stmt === false) {
-            die("Error preparing statement: " . htmlspecialchars($conn->error));
-        }
-        $stmt->bind_param("ssss", $username, $password, $email, $verificationCode);
-        $stmt->execute();
 
-        if (sendVerificationEmail($email, $verificationCode)) {
-            $success = "Akun berhasil didaftarkan. Silakan cek email Anda untuk verifikasi.";
-        } else {
-            $error = "Gagal mengirim email verifikasi.";
-        }
+    // Get the last inserted ID
+    $user_id = $stmt->insert_id;
+
+    // Generate user code using the last inserted ID
+    $user_code = 'USR-' . str_pad($user_id, 5, '0', STR_PAD_LEFT);
+
+    // Update the user with the generated user code
+    $stmt = $conn->prepare("UPDATE users SET user_code = ? WHERE id = ?");
+    if ($stmt === false) {
+        die("Error preparing statement: " . htmlspecialchars($conn->error));
+    }
+    $stmt->bind_param("si", $user_code, $user_id);
+    $stmt->execute();
+
+    if (sendVerificationEmail($email, $verificationCode)) {
+        $success = "Akun berhasil didaftarkan. Silakan cek email untuk verifikasi.";
+    } else {
+        $error = "Gagal mengirim email verifikasi.";
     }
 }
 ?>

@@ -12,23 +12,31 @@ $order_id = $_GET['id'];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $tracking_number = $_POST['tracking_number'];
+    $shipping_cost = $_POST['shipping_cost'];
 
-    // Perbarui status pesanan menjadi dikirim
-    $stmt = $conn->prepare("UPDATE orders SET status = 'shipped', tracking_number = ? WHERE id = ?");
+    // Hapus semua titik sebelum mengkonversi ke float
+    $shipping_cost = str_replace('.', '', $shipping_cost);
+
+    // Ubah ke desimal
+    $shipping_cost = floatval($shipping_cost);
+
+    // Perbarui status pesanan menjadi dikirim dengan ongkos kirim
+    $stmt = $conn->prepare("UPDATE orders SET status = 'shipped', tracking_number = ?, shipping_cost = ? WHERE id = ?");
     if ($stmt === false) {
         die("Error preparing statement: " . htmlspecialchars($conn->error));
     }
 
-    $stmt->bind_param("si", $tracking_number, $order_id);
+    $stmt->bind_param("sdi", $tracking_number, $shipping_cost, $order_id);
     if (!$stmt->execute()) {
         die("Error executing statement: " . htmlspecialchars($stmt->error));
     }
 
     echo "Order status updated successfully.";
-    
     header("Location: manage_orders.php");
     exit();
 }
+
+
 ?>
 
 <!DOCTYPE html>
@@ -173,18 +181,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         </div>
         <div class="content">
-            <h2>Input Resi Pengiriman</h2>
-            <form method="post" action="input_resi.php?id=<?= $order_id ?>">
-                <div class="mb-3">
-                    <label for="tracking_number" class="form-label">Nomor Resi (Opsional):</label>
-                    <input type="text" id="tracking_number" name="tracking_number" class="form-control">
-                </div>
-                <button type="submit" class="btn btn-primary">Submit</button>
-            </form>
-        </div>
+        <h2>Input Resi Pengiriman</h2>
+        <form method="post" action="input_resi.php?id=<?= $order_id ?>">
+            <div class="mb-3">
+                <label for="tracking_number" class="form-label">Nomor Resi (Opsional):</label>
+                <input type="text" id="tracking_number" name="tracking_number" class="form-control">
+            </div>
+            <div class="mb-3">
+                <label for="shipping_cost" class="form-label">Ongkos Kirim (Opsional):</label>
+                <input type="text" id="shipping_cost" name="shipping_cost" class="form-control" oninput="formatNumber(this)">
+            </div>
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+    </div>
 
-    <!-- Bootstrap JS and dependencies -->
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
+<!-- Bootstrap JS and dependencies -->
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
+
+
+    <script>
+        function formatNumber(input) {
+        let value = input.value.replace(/\./g, ''); // Hapus titik
+        let formattedValue = new Intl.NumberFormat('id-ID').format(value); // Format angka dengan pemisah ribuan
+        input.value = formattedValue;
+}
+
+
+    </script>
 </body>
 </html>

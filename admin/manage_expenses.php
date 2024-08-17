@@ -175,7 +175,7 @@ th {
     <h2>Pengelolaan Pengeluaran Bahan Baku</h2>
     <table>
         <tr>
-            <th>ID</th>
+            <th>ID Pengeluaran</th>
             <th>Nama Bahan</th>
             <th>Jumlah</th>
             <th>Satuan</th>
@@ -184,7 +184,7 @@ th {
         </tr>
         <?php foreach ($expenses as $expense): ?>
             <tr>
-                <td><?= $expense['id'] ?></td>
+                <td><?= $expense['expense_code'] ?></td>
                 <td><?= $expense['material_name'] ?></td>
                 <td><?= $expense['quantity'] ?></td>
                 <td><?= $expense['unit'] ?></td>

@@ -188,8 +188,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['status_action'])) {
                         <?php endif; ?>
                         <table class="table table-bordered">
                             <tr>
-                                <th>ID Pesanan:</th>
-                                <td><?= htmlspecialchars($order['id']) ?></td>
+                                <th>Kode Pesanan:</th>
+                                <td><?= htmlspecialchars($order['order_code']) ?></td>
                             </tr>
                             <tr>
                                 <th>Pengguna:</th>

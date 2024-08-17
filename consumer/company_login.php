@@ -18,11 +18,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $user = $result->fetch_assoc();
 
     if ($user && password_verify($password, $user['password'])) {
-        $_SESSION['user_id'] = $user['id'];
-        $_SESSION['username'] = $user['username'];  // Simpan username ke dalam sesi
-        $_SESSION['role'] = $user['role'];
-        header('Location: company_catalog.php');
-        exit();
+        if ($user['email_verified']) {
+            $_SESSION['user_id'] = $user['id'];
+            $_SESSION['username'] = $user['username'];  // Simpan username ke dalam sesi
+            $_SESSION['role'] = $user['role'];
+            header('Location: company_catalog.php');
+            exit();
+        } else {
+            $error = "Email Anda belum diverifikasi. Silakan cek email Anda untuk verifikasi.";
+        }
     } else {
         $error = "Username atau password salah.";
     }

@@ -12,7 +12,7 @@ if (!isset($_SESSION['user_id'])) {
 $order_id = $_GET['order_id'];
 
 // Mengambil data pesanan dari database
-$stmt = $conn->prepare("SELECT orders.*, users.username, users.email FROM orders 
+$stmt = $conn->prepare("SELECT orders.*, users.username, users.email, orders.order_code FROM orders 
                         JOIN users ON orders.user_id = users.id 
                         WHERE orders.id = ?");
 $stmt->bind_param("i", $order_id);
@@ -112,7 +112,7 @@ $order_items = $result->fetch_all(MYSQLI_ASSOC);
                                 <h2>Percetakan Orieska</h2>
                             </td>
                             <td>
-                                Faktur #: <?= htmlspecialchars($order['id']) ?><br>
+                                Faktur #: <?= htmlspecialchars($order['order_code']); ?><br>
                                 Dibuat: <?= date('d-m-Y', strtotime($order['created_at'])) ?><br>
                                 Status: 
                                 <?php if ($order['status'] === 'pending'): ?>

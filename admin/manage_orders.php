@@ -9,7 +9,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
 }
 
 // Mengambil daftar pesanan dari konsumen perorangan dari database dan mengurutkannya berdasarkan id pesanan dalam urutan menurun
-$stmt = $conn->prepare("SELECT orders.*, users.username FROM orders JOIN users ON orders.user_id = users.id WHERE users.role = 'individual' ORDER BY orders.id DESC");
+$stmt = $conn->prepare("SELECT orders.*, users.username, orders.order_code FROM orders JOIN users ON orders.user_id = users.id WHERE users.role = 'individual' ORDER BY orders.id DESC");
 $stmt->execute();
 $result = $stmt->get_result();
 $orders = $result->fetch_all(MYSQLI_ASSOC);
@@ -186,7 +186,7 @@ $orders = $result->fetch_all(MYSQLI_ASSOC);
             </tr>
             <?php foreach ($orders as $order): ?>
                 <tr>
-                    <td><?= $order['id'] ?></td>
+                    <td><?= htmlspecialchars($order['order_code']); ?></td>
                     <td><?= $order['username'] ?></td>
                     <td><?= $order['address'] ?></td>
                     <td><?= $order['shipping_method'] ?></td>

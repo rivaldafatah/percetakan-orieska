@@ -16,7 +16,7 @@ if (!isset($_GET['id'])) {
 $order_id = $_GET['id'];
 
 // Mengambil data pesanan dari database
-$stmt = $conn->prepare("SELECT orders.*, users.username, users.email FROM orders 
+$stmt = $conn->prepare("SELECT orders.*, orders.order_code, users.username, users.email FROM orders 
                         JOIN users ON orders.user_id = users.id 
                         WHERE orders.id = ? AND orders.user_id = ?");
 $stmt->bind_param("ii", $order_id, $_SESSION['user_id']);
@@ -178,8 +178,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['status_action'])) {
                         <?php endif; ?>
                         <table class="table table-bordered">
                             <tr>
-                                <th>ID Pesanan:</th>
-                                <td><?= htmlspecialchars($order['id']) ?></td>
+                                <th>Kode Pesanan:</th>
+                                <td><?= htmlspecialchars($order['order_code']) ?></td>
                             </tr>
                             <tr>
                                 <th>Pengguna:</th>
@@ -212,6 +212,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['status_action'])) {
                             <tr>
                                 <th>Resi:</th>
                                 <td><?= htmlspecialchars($order['tracking_number']); ?></td>
+                            </tr>
+                            <tr>
+                                <th>Ongkir:</th>
+                                <td>Rp.<?= number_format($order['shipping_cost'], 2, ',', '.'); ?></td>
                             </tr>
                         </table>
 

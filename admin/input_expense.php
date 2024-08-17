@@ -13,18 +13,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $unit = $_POST['unit'];
     $cost = $_POST['cost'];
 
-    $stmt = $conn->prepare("INSERT INTO expenses (material_name, quantity, unit, cost) VALUES (?, ?, ?, ?)");
-    $stmt->bind_param("sisd", $material_name, $quantity, $unit, $cost);
+    // Generate expense code
+    $prefix = "PGLRN-";
+    $stmt = $conn->prepare("SELECT COUNT(id) AS total_expenses FROM expenses");
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+    $total_expenses = $row['total_expenses'] + 1;
+    $expense_code = $prefix . str_pad($total_expenses, 5, '0', STR_PAD_LEFT);
+
+    // Insert expense into database
+    $stmt = $conn->prepare("INSERT INTO expenses (material_name, quantity, unit, cost, expense_code) VALUES (?, ?, ?, ?, ?)");
+    if ($stmt === false) {
+        die("Error preparing statement: " . htmlspecialchars($conn->error));
+    }
+    $stmt->bind_param("sisds", $material_name, $quantity, $unit, $cost, $expense_code);
     $stmt->execute();
 
-    // $stmt = $conn->prepare("UPDATE inventory SET stock = stock + ? WHERE material_name = ?");
-    // $stmt->bind_param("is", $material_name, $quantity, $unit, $cost);
-    // $stmt->execute();
-
-    $success = "Pengeluaran berhasil dicatat dan stok diperbarui.";
+    $success = "Pengeluaran berhasil dicatat dengan kode " . $expense_code . " dan stok diperbarui.";
 }
-
 ?>
+
 
 <!DOCTYPE html>
 <html>

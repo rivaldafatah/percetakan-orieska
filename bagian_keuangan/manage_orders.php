@@ -158,7 +158,7 @@ $orders = $result->fetch_all(MYSQLI_ASSOC);
             </tr>
             <?php foreach ($orders as $order): ?>
                 <tr>
-                    <td><?= $order['id'] ?></td>
+                    <td><?= $order['order_code'] ?></td>
                     <td><?= $order['username'] ?></td>
                     <td><?= $order['address'] ?></td>
                     <td><?= $order['shipping_method'] ?></td>

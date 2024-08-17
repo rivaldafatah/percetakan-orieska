@@ -19,7 +19,7 @@ $result = $stmt->get_result();
 $order = $result->fetch_assoc();
 
 // Mengambil detail pesanan dari database dengan nama produk
-$stmt = $conn->prepare("SELECT order_items.*, products.name AS product_name FROM order_items JOIN products ON order_items.product_id = products.id WHERE order_items.order_id = ?");
+$stmt = $conn->prepare("SELECT order_items.*, products.name AS product_name, products.product_code FROM order_items JOIN products ON order_items.product_id = products.id WHERE order_items.order_id = ?");
 $stmt->bind_param("i", $order_id);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -200,7 +200,7 @@ $notes = implode(", ", $notes);
             <table class="table table-bordered">
                 <tr>
                     <th>ID Pesanan</th>
-                    <td><?= htmlspecialchars($order['id']) ?></td>
+                    <td><?= htmlspecialchars($order['order_code']) ?></td>
                 </tr>
                 <tr>
                     <th>Pengguna</th>
@@ -227,6 +227,10 @@ $notes = implode(", ", $notes);
                     <td><?= htmlspecialchars($order['tracking_number']) ?></td>
                 </tr>
                 <tr>
+                    <th>Ongkir:</th>
+                    <td>Rp.<?= number_format($order['shipping_cost'], 2, ',', '.'); ?></td>
+                </tr>
+                <tr>
                     <th>Catatan</th>
                     <td><?= htmlspecialchars($notes) ?></td>
                 </tr>
@@ -247,7 +251,7 @@ $notes = implode(", ", $notes);
                 <tbody>
                     <?php foreach ($order_items as $item): ?>
                     <tr>
-                        <td><?= $item['product_id'] ?></td>
+                        <td><?= $item['product_code'] ?></td>
                         <td><?= htmlspecialchars($item['product_name']) ?></td>
                         <td>Rp <?= number_format($item['price'], 2, ',', '.') ?></td>
                         <td><?= htmlspecialchars($item['quantity']) ?></td>

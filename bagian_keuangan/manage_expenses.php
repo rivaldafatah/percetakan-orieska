@@ -156,7 +156,7 @@ th {
         </tr>
         <?php foreach ($expenses as $expense): ?>
             <tr>
-                <td><?= $expense['id'] ?></td>
+                <td><?= $expense['expense_code'] ?></td>
                 <td><?= $expense['material_name'] ?></td>
                 <td><?= $expense['quantity'] ?></td>
                 <td><?= $expense['unit'] ?></td>

@@ -20,18 +20,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $price = $_POST['price'];
     $estimasi_pengerjaan = $_POST['estimasi_pengerjaan'];
     $min_order = $_POST['min_order'];
+    $company = $_POST['company']; // Tambahkan ini
     $image = $_FILES['image']['name'];
 
+    // Hapus semua titik sebelum mengkonversi ke float
+    $price = str_replace('.', '', $price);
+
+    // Ubah ke desimal
+    $price = floatval($price);
+
+    // Handle image upload
     $target_dir = "../uploads/products/";
     $target_file = $target_dir . basename($image);
     move_uploaded_file($_FILES['image']['tmp_name'], $target_file);
 
-    $stmt = $conn->prepare("INSERT INTO products (name, description, price, estimasi_pengerjaan, min_order, image) VALUES (?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("ssdsds", $name, $description, $price, $estimasi_pengerjaan, $min_order, $image);
+    // Generate product code
+    $prefix = "PRD-";
+    $stmt = $conn->prepare("SELECT COUNT(id) AS total_products FROM products");
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+    $total_products = $row['total_products'] + 1;
+    $product_code = $prefix . str_pad($total_products, 5, '0', STR_PAD_LEFT);
+
+    // Insert product into database
+    $stmt = $conn->prepare("INSERT INTO products (name, description, price, estimasi_pengerjaan, min_order, image, product_code, company) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    if ($stmt === false) {
+        die("Error preparing statement: " . htmlspecialchars($conn->error));
+    }
+    $stmt->bind_param("ssdsdssi", $name, $description, $price, $estimasi_pengerjaan, $min_order, $image, $product_code, $company);
     $stmt->execute();
     
     $product_id = $stmt->insert_id;
 
+    // Insert associated materials
     if (isset($_POST['materials'])) {
         $materials = $_POST['materials'];
         foreach ($materials as $material_id) {
@@ -44,7 +66,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header('Location: manage_products.php');
     exit();
 }
+
 ?>
+
 
 <!DOCTYPE html>
 <html>
@@ -200,7 +224,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             <div class="mb-3">
                 <label class="form-label">Harga:</label>
-                <input type="number" class="form-control" step="0.01" name="price" required>
+                <input type="number" class="form-control" step="0.01" name="price" oninput="formatNumber(this)" required>
             </div>
             <div class="mb-3">
                 <label class="form-label">Estimasi Pengerjaan:</label>
@@ -213,6 +237,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="mb-3">
                 <label class="form-label">Gambar:</label>
                 <input type="file" class="form-control" name="image" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Target Konsumen:</label>
+                    <select class="form-select" name="company" required>
+                    <option value="0">Konsumen Biasa</option>
+                    <option value="1">Konsumen Perusahaan</option>
+                </select>
             </div>
             <div id="materials-container">
                 <div class="mb-3">
@@ -253,5 +284,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <!-- Bootstrap JS and dependencies -->
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
+
+<script>
+        function formatNumber(input) {
+        let value = input.value.replace(/\./g, ''); // Hapus titik
+        let formattedValue = new Intl.NumberFormat('id-ID').format(value); // Format angka dengan pemisah ribuan
+        input.value = formattedValue;
+}
+
+
+    </script>
 </body>
 </html>

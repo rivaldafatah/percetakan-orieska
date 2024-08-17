@@ -1,28 +1,86 @@
 <?php
 session_start();
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+require '../vendor/autoload.php';
 include '../includes/db.php';
 
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'pemilik') {
-    header('Location: login.php');
-    exit();
+$success = "";
+
+function sendVerificationEmail($email, $verificationCode) {
+    $mail = new PHPMailer(true);
+
+    try {
+        // Server settings
+        $mail->isSMTP();
+        $mail->Host = 'smtp.gmail.com';  // Set your SMTP server
+        $mail->SMTPAuth = true;
+        $mail->Username = 'dalexganteng@gmail.com'; // SMTP username
+        $mail->Password = 'ayeh afnp pkeb kpoe'; // SMTP password
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port = 587;
+
+        // Recipients
+        $mail->setFrom('your-email@gmail.com', 'Percetakan Orieska');
+        $mail->addAddress($email);
+
+        // Content
+        $mail->isHTML(true);
+        $mail->Subject = 'Verifikasi Email Perusahaan';
+        $mail->Body    = "Klik link di bawah ini untuk memverifikasi email perusahaan Anda:<br><a href='http://localhost/percetakan-orieska/consumer/verify.php?code=$verificationCode'>Verifikasi Email</a>";
+
+        $mail->send();
+        return true;
+    } catch (Exception $e) {
+        return false;
+    }
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = $_POST['username'];
     $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
     $email = $_POST['email'];
+    $verificationCode = md5(uniqid(rand(), true));
 
-    $stmt = $conn->prepare("INSERT INTO users (username, password, email, role) VALUES (?, ?, ?, 'company')");
-    $stmt->bind_param("sss", $username, $password, $email);
+    // Insert new user to get the ID
+    $stmt = $conn->prepare("INSERT INTO users (username, password, email, role, verification_code) VALUES (?, ?, ?, 'company', ?)");
+    if ($stmt === false) {
+        die("Error preparing statement: " . htmlspecialchars($conn->error));
+    }
+    $stmt->bind_param("ssss", $username, $password, $email, $verificationCode);
     $stmt->execute();
 
-    $success = "Akun perusahaan berhasil dibuat.";
+    // Get the last inserted ID
+    $user_id = $stmt->insert_id;
+
+    // Generate user code using the last inserted ID
+    $user_code = 'USR-' . str_pad($user_id, 5, '0', STR_PAD_LEFT);
+
+    // Update the user with the generated user code
+    $stmt = $conn->prepare("UPDATE users SET user_code = ? WHERE id = ?");
+    if ($stmt === false) {
+        die("Error preparing statement: " . htmlspecialchars($conn->error));
+    }
+    $stmt->bind_param("si", $user_code, $user_id);
+    $stmt->execute();
+
+    if (sendVerificationEmail($email, $verificationCode)) {
+        $success = "Akun perusahaan berhasil dibuat. Silakan hubungi pihak perusahaan untuk verifikasi.";
+    } else {
+        $error = "Gagal mengirim email verifikasi.";
+    }
 }
 ?>
 
 <!DOCTYPE html>
 <html>
 <head>
+    <script>
+        function showAlert(message) {
+            alert(message);
+        }
+    </script>
     <title>Pendaftaran Akun Perusahaan - Admin - Percetakan Orieska</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -79,7 +137,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             padding: 20px;
             height: calc(100vh - 56px); /* Adjust the height to account for the navbar */
         }
-</style>
+    </style>
 </head>
 <body>
 <!-- Navbar -->
@@ -162,24 +220,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         </div>
     <div class="content">
-    <h2>Pendaftaran Akun Perusahaan</h2>
-    <?php if (isset($success)) { echo "<p>$success</p>"; } ?>
-    <div class="container">
-    <form method="post" action="company_register.php">
-        <div class="mb-3">
-          <label class="form-label">Username:</label>
-          <input type="text" class="form-control" name="username" required>
+        <h2>Pendaftaran Akun Perusahaan</h2>
+        <?php if (isset($success)) { echo "<p>$success</p>"; } ?>
+        <?php if (isset($error)) { echo "<p>$error</p>"; } ?>
+        <div class="container">
+            <form method="post" action="company_register.php">
+                <div class="mb-3">
+                    <label class="form-label">Username:</label>
+                    <input type="text" class="form-control" name="username" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Password:</label>
+                    <input type="password" class="form-control" name="password" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Email:</label>
+                    <input type="email" class="form-control" name="email" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Daftar</button>
+            </form>
         </div>
-        <div class="mb-3">
-          <label class="form-label">Password:</label>
-          <input type="password" class="form-control" name="password" required>
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Email:</label>
-          <input type="email" class="form-control" name="email" required>
-        </div>
-        <button type="submit" class="btn btn-primary">Daftar</button>
-    </form>
     </div>
 </div>
 </body>

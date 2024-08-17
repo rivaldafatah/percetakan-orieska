@@ -177,7 +177,7 @@ $products = $result->fetch_all(MYSQLI_ASSOC);
             <br><br>
             <table>
                 <tr>
-                    <th>ID</th>
+                    <th>Kode Produk</th>
                     <th>Nama</th>
                     <th>Deskripsi</th>
                     <th>Harga</th>
@@ -187,7 +187,7 @@ $products = $result->fetch_all(MYSQLI_ASSOC);
                 </tr>
                 <?php foreach ($products as $product): ?>
                 <tr>
-                    <td><?= $product['id'] ?></td>
+                    <td><?= $product['product_code'] ?></td>
                     <td><?= $product['name'] ?></td>
                     <td><?= $product['description'] ?></td>
                     <td>Rp <?= number_format($product['price'], 2, ',', '.') ?></td>

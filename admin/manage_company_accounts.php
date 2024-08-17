@@ -192,7 +192,7 @@ th {
                 </tr>
                 <?php foreach ($companies as $company): ?>
                     <tr>
-                        <td><?= $company['id'] ?></td>
+                        <td><?= $company['user_code'] ?></td>
                         <td><?= $company['username'] ?></td>
                         <td><?= $company['email'] ?></td>
                         <td>

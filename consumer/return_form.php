@@ -10,14 +10,26 @@ if (!isset($_SESSION['user_id'])) {
 
 $order_id = $_GET['order_id'];
 
-// Ambil username dari sesi, pastikan bahwa session memiliki key 'username'
+// Ambil username dari sesi
 $username = isset($_SESSION['username']) ? $_SESSION['username'] : '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $address = $_POST['address'];
     $expedition = $_POST['expedition'];
 
-    // Update status pesanan dan simpan detail pengiriman retur
+    // Generate Reship Code dengan format RESHIP-00001
+    $stmt = $conn->prepare("SELECT MAX(id) AS max_id FROM return_shipments");
+    if ($stmt === false) {
+        die('Prepare failed: ' . htmlspecialchars($conn->error));
+    }
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+    $max_id = $row['max_id'];
+    $new_id = $max_id + 1;
+    $reship_code = "RESHIP-" . str_pad($new_id, 5, "0", STR_PAD_LEFT);
+
+    // Update status pesanan
     $stmt = $conn->prepare("UPDATE orders SET status = 'being_returned' WHERE id = ?");
     if ($stmt === false) {
         die('Prepare failed: ' . htmlspecialchars($conn->error));
@@ -28,11 +40,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     $stmt->close();
 
-    $stmt = $conn->prepare("INSERT INTO return_shipments (order_id, sender_name, sender_address, expedition) VALUES (?, ?, ?, ?)");
+    // Simpan detail pengiriman retur beserta Reship Code
+    $stmt = $conn->prepare("INSERT INTO return_shipments (order_id, sender_name, sender_address, expedition, reship_code) VALUES (?, ?, ?, ?, ?)");
     if ($stmt === false) {
         die('Prepare failed: ' . htmlspecialchars($conn->error));
     }
-    $stmt->bind_param("isss", $order_id, $username, $address, $expedition);
+    $stmt->bind_param("issss", $order_id, $username, $address, $expedition, $reship_code);
     if (!$stmt->execute()) {
         die('Execute failed: ' . htmlspecialchars($stmt->error));
     }
