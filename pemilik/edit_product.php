@@ -37,7 +37,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id = $_POST['id'];
     $name = $_POST['name'];
     $description = $_POST['description'];
-    $price = $_POST['price'];
+    // Hapus semua titik sebelum mengkonversi ke float
+    $price = str_replace('.', '', $_POST['price']);
+    $price = floatval($price);
     $estimasi_pengerjaan = $_POST['estimasi_pengerjaan'];
     $min_order = $_POST['min_order'];
     $company = $_POST['company']; // Tambahkan ini
@@ -214,7 +216,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             <div class="mb-3">
                 <label class="form-label">Harga:</label>
-                <input type="number" step="0.01" name="price" class="form-control" value="<?= $product['price'] ?>" required>
+                <input type="text" name="price" class="form-control" value="<?= number_format($product['price'], 0, '', '.') ?>" oninput="formatNumber(this)" required>
             </div>
             <div class="mb-3">
                 <label class="form-label">Estimasi Pengerjaan:</label>
@@ -274,6 +276,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         `;
         container.appendChild(newMaterial);
         materialIndex++;
+    }
+
+    // Format Number Function
+    function formatNumber(input) {
+        let value = input.value.replace(/\./g, ''); // Hapus titik
+        let formattedValue = new Intl.NumberFormat('id-ID').format(value); // Format angka dengan pemisah ribuan
+        input.value = formattedValue;
     }
 </script>
 

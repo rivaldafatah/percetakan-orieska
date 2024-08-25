@@ -24,8 +24,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $image = $_FILES['image']['name'];
 
     // Hapus semua titik sebelum mengkonversi ke float
-    $price = str_replace('.', '', $price);
-    $price = floatval($price);
+    $price = str_replace('.', '', $_POST['price']); // Menghapus titik
+    $price = floatval($price); // Mengonversi ke float
+
 
     // Handle image upload
     $target_dir = "../uploads/products/";
@@ -224,7 +225,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             <div class="mb-3">
                 <label class="form-label">Harga:</label>
-                <input type="number" class="form-control" step="0.01" name="price" oninput="formatNumber(this)" required>
+                <input type="text" class="form-control" name="price" oninput="formatNumber(this)" required>
             </div>
             <div class="mb-3">
                 <label class="form-label">Estimasi Pengerjaan:</label>
@@ -287,10 +288,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <script>
         function formatNumber(input) {
-        let value = input.value.replace(/\./g, ''); // Hapus titik
-        let formattedValue = new Intl.NumberFormat('id-ID').format(value); // Format angka dengan pemisah ribuan
-        input.value = formattedValue;
+    let value = input.value.replace(/\D/g, ''); // Hapus semua karakter non-digit
+    if (value.length === 0) return; // Jika tidak ada angka, kembalikan kosong
+    
+    let formattedValue = new Intl.NumberFormat('id-ID').format(value); // Format angka dengan pemisah ribuan
+    input.value = formattedValue;
 }
+
 
 
     </script>
