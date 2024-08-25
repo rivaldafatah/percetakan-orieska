@@ -20,13 +20,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $price = $_POST['price'];
     $estimasi_pengerjaan = $_POST['estimasi_pengerjaan'];
     $min_order = $_POST['min_order'];
-    $company = $_POST['company']; // Tambahkan ini
+    $company = $_POST['company']; 
     $image = $_FILES['image']['name'];
 
     // Hapus semua titik sebelum mengkonversi ke float
     $price = str_replace('.', '', $price);
-
-    // Ubah ke desimal
     $price = floatval($price);
 
     // Handle image upload
@@ -34,24 +32,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $target_file = $target_dir . basename($image);
     move_uploaded_file($_FILES['image']['tmp_name'], $target_file);
 
-    // Generate product code
-    $prefix = "PRD-";
-    $stmt = $conn->prepare("SELECT COUNT(id) AS total_products FROM products");
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $row = $result->fetch_assoc();
-    $total_products = $row['total_products'] + 1;
-    $product_code = $prefix . str_pad($total_products, 5, '0', STR_PAD_LEFT);
-
     // Insert product into database
-    $stmt = $conn->prepare("INSERT INTO products (name, description, price, estimasi_pengerjaan, min_order, image, product_code, company) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt = $conn->prepare("INSERT INTO products (name, description, price, estimasi_pengerjaan, min_order, image, company) VALUES (?, ?, ?, ?, ?, ?, ?)");
     if ($stmt === false) {
         die("Error preparing statement: " . htmlspecialchars($conn->error));
     }
-    $stmt->bind_param("ssdsdssi", $name, $description, $price, $estimasi_pengerjaan, $min_order, $image, $product_code, $company);
+    $stmt->bind_param("ssdsdsi", $name, $description, $price, $estimasi_pengerjaan, $min_order, $image, $company);
     $stmt->execute();
-    
+
+    // Ambil ID produk yang baru saja dimasukkan
     $product_id = $stmt->insert_id;
+
+    // Generate kode produk berdasarkan ID
+    $product_code = 'PRD-' . str_pad($product_id, 5, '0', STR_PAD_LEFT);
+
+    // Update product dengan kode produk yang benar
+    $stmt = $conn->prepare("UPDATE products SET product_code = ? WHERE id = ?");
+    if ($stmt === false) {
+        die("Error preparing statement: " . htmlspecialchars($conn->error));
+    }
+    $stmt->bind_param("si", $product_code, $product_id);
+    $stmt->execute();
 
     // Insert associated materials
     if (isset($_POST['materials'])) {
@@ -66,7 +67,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header('Location: manage_products.php');
     exit();
 }
-
 ?>
 
 

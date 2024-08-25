@@ -11,6 +11,11 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'pemilik') {
 if (isset($_GET['id'])) {
     $id = $_GET['id'];
 
+    // Menghapus bahan baku yang terkait dengan produk di tabel product_materials
+    $stmt = $conn->prepare("DELETE FROM product_materials WHERE product_id = ?");
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+
     // Mengambil informasi produk untuk menghapus file gambar dari server
     $stmt = $conn->prepare("SELECT image FROM products WHERE id = ?");
     $stmt->bind_param("i", $id);
@@ -34,4 +39,5 @@ if (isset($_GET['id'])) {
     header('Location: manage_products.php');
     exit();
 }
+
 ?>

@@ -128,8 +128,6 @@ th {
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
                             <li><a class="dropdown-item" href="manage_inventory.php">Stok Bahan</a></li>
-                            <li><a class="dropdown-item" href="add_inventory.php">Tambah Bahan Baku</a></li>
-                            <li><a class="dropdown-item" href="request_stock.php">Permintaan Bahan Baku</a></li>
                             <li><a class="dropdown-item" href="manage_requests.php">Cetak</a></li>
                         </ul>
                     </li>
@@ -138,7 +136,6 @@ th {
                             Pengeluaran
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <li><a class="dropdown-item" href="input_expense.php">Tambah Pengeluaran</a></li>
                             <li><a class="dropdown-item" href="manage_expenses.php">Laporan Pengeluaran</a></li>
                         </ul>
                     </li>

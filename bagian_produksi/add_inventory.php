@@ -14,21 +14,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_inventory'])) {
     $description = $_POST['description'];
     $quantity = $_POST['quantity'];
 
-    // Generate kode bahan
-    $prefix = "BHN-";
-    $stmt = $conn->prepare("SELECT COUNT(id) AS total_inventory FROM inventory");
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $row = $result->fetch_assoc();
-    $total_inventory = $row['total_inventory'] + 1;
-    $material_code = $prefix . str_pad($total_inventory, 5, '0', STR_PAD_LEFT);
-
     // Menyimpan data bahan baku ke database
-    $stmt = $conn->prepare("INSERT INTO inventory (name, description, quantity, material_code) VALUES (?, ?, ?, ?)");
+    $stmt = $conn->prepare("INSERT INTO inventory (name, description, quantity) VALUES (?, ?, ?)");
     if ($stmt === false) {
         die("Error preparing statement: " . htmlspecialchars($conn->error));
     }
-    $stmt->bind_param("ssis", $name, $description, $quantity, $material_code);
+    $stmt->bind_param("ssi", $name, $description, $quantity);
+    $stmt->execute();
+
+    // Ambil ID bahan baku yang baru saja dimasukkan
+    $inventory_id = $stmt->insert_id;
+
+    // Generate kode bahan berdasarkan ID
+    $material_code = 'BHN-' . str_pad($inventory_id, 5, '0', STR_PAD_LEFT);
+
+    // Update bahan baku dengan kode bahan yang benar
+    $stmt = $conn->prepare("UPDATE inventory SET material_code = ? WHERE id = ?");
+    if ($stmt === false) {
+        die("Error preparing statement: " . htmlspecialchars($conn->error));
+    }
+    $stmt->bind_param("si", $material_code, $inventory_id);
     $stmt->execute();
 
     header('Location: manage_inventory.php');

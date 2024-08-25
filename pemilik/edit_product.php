@@ -40,6 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $price = $_POST['price'];
     $estimasi_pengerjaan = $_POST['estimasi_pengerjaan'];
     $min_order = $_POST['min_order'];
+    $company = $_POST['company']; // Tambahkan ini
     $image = $_FILES['image']['name'];
 
     if ($image) {
@@ -50,8 +51,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $image = $product['image'];
     }
 
-    $stmt = $conn->prepare("UPDATE products SET name = ?, description = ?, price = ?, estimasi_pengerjaan = ?, min_order = ?, image = ? WHERE id = ?");
-    $stmt->bind_param("ssdsisi", $name, $description, $price, $estimasi_pengerjaan, $min_order, $image, $id);
+    $stmt = $conn->prepare("UPDATE products SET name = ?, description = ?, price = ?, estimasi_pengerjaan = ?, min_order = ?, image = ?, company = ? WHERE id = ?");
+    $stmt->bind_param("ssdsisii", $name, $description, $price, $estimasi_pengerjaan, $min_order, $image, $company, $id);
     $stmt->execute();
 
     // Menghapus bahan lama yang terkait dengan produk
@@ -72,6 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header('Location: manage_products.php');
     exit();
 }
+
 ?>
 
 <!DOCTYPE html>
@@ -228,6 +230,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php if ($product['image']): ?>
                 <img src="../uploads/products/<?= $product['image'] ?>" alt="<?= $product['name'] ?>" width="100">
             <?php endif; ?>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Target Konsumen:</label>
+                <select class="form-select" name="company" required>
+                    <option value="0" <?= $product['company'] == 0 ? 'selected' : '' ?>>Konsumen Biasa</option>
+                    <option value="1" <?= $product['company'] == 1 ? 'selected' : '' ?>>Konsumen Perusahaan</option>
+                </select>
             </div>
             <div id="materials-container">
                 <?php foreach ($product_materials as $index => $product_material): ?>
