@@ -68,6 +68,12 @@ if ($new_status == 'approved') {
     header("Location: input_resi.php?id=$order_id");
     sendStatusUpdateEmail($email, 'shipped');
     exit();
+    
+} elseif ($new_status == 'rejected') {
+    header("Location: reject_order.php?id=$order_id");
+    sendStatusUpdateEmail($email, 'rejected');
+    exit();
+
 } elseif ($new_status == 'completed') {
     $stmt = $conn->prepare("UPDATE orders SET status = 'completed' WHERE id = ?");
     $stmt->bind_param("i", $order_id);
