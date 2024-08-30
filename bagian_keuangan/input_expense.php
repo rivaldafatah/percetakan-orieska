@@ -11,7 +11,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $material_name = $_POST['material_name'];
     $quantity = $_POST['quantity'];
     $unit = $_POST['unit'];
-    $cost = $_POST['cost'];
+    
+    // Hapus semua titik sebelum mengkonversi ke float
+    $cost = str_replace('.', '', $_POST['cost']);
+    $cost = floatval($cost);
 
     // Generate expense code
     $prefix = "PGLRN-";
@@ -32,6 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $success = "Pengeluaran berhasil dicatat dengan kode " . $expense_code . " dan stok diperbarui.";
 }
+
 ?>
 
 
@@ -165,12 +169,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               <input type="text" class="form-control" name="unit" required>
             </div>
             <div class="mb-3">
-              <label class="form-label">Biaya (Rp):</label>
-              <input type="number" class="form-control" step="0.01" name="cost" required>
+                <label class="form-label">Biaya (Rp):</label>
+                <input type="text" class="form-control" name="cost" oninput="formatNumber(this)" required>
             </div>
             <button type="submit" class="btn btn-primary">Catat Pengeluaran</button>
         </form>
         </div>
     </div>
+    <script>
+            function formatNumber(input) {
+            let value = input.value.replace(/\./g, ''); // Hapus titik yang sudah ada
+            if (!isNaN(value) && value.length > 0) {
+                let formattedValue = new Intl.NumberFormat('id-ID').format(value); // Format angka dengan pemisah ribuan
+                input.value = formattedValue;
+            }
+        }
+</script>
 </body>
 </html>

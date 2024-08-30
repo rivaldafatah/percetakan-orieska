@@ -160,7 +160,7 @@ th {
                 <td><?= $expense['material_name'] ?></td>
                 <td><?= $expense['quantity'] ?></td>
                 <td><?= $expense['unit'] ?></td>
-                <td><?= number_format($expense['cost'], 2, ',', '.') ?></td>
+                <td>Rp. <?= number_format($expense['cost'], 2, ',', '.') ?></td>
                 <td><?= $expense['expense_date'] ?></td>
             </tr>
         <?php endforeach; ?>
