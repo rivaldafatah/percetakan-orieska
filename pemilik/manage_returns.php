@@ -1,6 +1,7 @@
 <?php
 session_start();
 include '../includes/db.php';
+include '../includes/functions.php';  // Pastikan untuk memasukkan file functions.php
 
 // Pastikan hanya admin yang dapat mengakses halaman ini
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'pemilik') {
@@ -12,15 +13,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $return_id = $_POST['return_id'];
     $action = $_POST['action'];
 
+    // Mengambil email pengguna berdasarkan return_id
+    $stmt = $conn->prepare("SELECT users.email, users.username FROM returns 
+                            JOIN orders ON returns.order_id = orders.id 
+                            JOIN users ON orders.user_id = users.id 
+                            WHERE returns.id = ?");
+    $stmt->bind_param("i", $return_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $user = $result->fetch_assoc();
+    $email = $user['email']; // Mengambil email
+
     if ($action === 'accept') {
         $stmt = $conn->prepare("UPDATE returns SET status = 'approved' WHERE id = ?");
         $stmt->bind_param("i", $return_id);
         $stmt->execute();
 
-        // Update status pesanan di konsumen menjadi 'return_accepted'
+        // Update status pesanan di konsumen menjadi 'return_approved'
         $stmt = $conn->prepare("UPDATE orders SET status = 'return_approved' WHERE id = (SELECT order_id FROM returns WHERE id = ?)");
         $stmt->bind_param("i", $return_id);
         $stmt->execute();
+
+        // Kirim email notifikasi ke konsumen
+        sendStatusUpdateEmail($email, 'Pengembalian Anda telah diterima');
+        
     } elseif ($action === 'reject') {
         $stmt = $conn->prepare("UPDATE returns SET status = 'rejected' WHERE id = ?");
         $stmt->bind_param("i", $return_id);
@@ -30,6 +46,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt = $conn->prepare("UPDATE orders SET status = 'return_rejected' WHERE id = (SELECT order_id FROM returns WHERE id = ?)");
         $stmt->bind_param("i", $return_id);
         $stmt->execute();
+
+        // Kirim email notifikasi ke konsumen
+        sendStatusUpdateEmail($email, 'Pengembalian Anda telah ditolak');
     }
 
     header('Location: manage_returns.php');
