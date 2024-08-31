@@ -1,7 +1,11 @@
 <?php
 session_start();
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+require '../vendor/autoload.php';
 include '../includes/db.php';
-include '../includes/functions.php';  // Pastikan untuk memasukkan file functions.php
+include '../includes/functions.php';  // Pastikan file ini ada dan menyimpan fungsi sendStatusUpdateEmail
 
 // Pastikan hanya admin yang dapat mengakses halaman ini
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'pemilik') {
@@ -11,10 +15,10 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'pemilik') {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $return_id = $_POST['return_id'];
-    $action = $_POST['action'];
+    $rejection_reason = $_POST['rejection_reason'];
 
     // Mengambil email pengguna berdasarkan return_id
-    $stmt = $conn->prepare("SELECT users.email, users.username FROM returns 
+    $stmt = $conn->prepare("SELECT users.email FROM returns 
                             JOIN orders ON returns.order_id = orders.id 
                             JOIN users ON orders.user_id = users.id 
                             WHERE returns.id = ?");
@@ -22,58 +26,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt->execute();
     $result = $stmt->get_result();
     $user = $result->fetch_assoc();
-    $email = $user['email']; // Mengambil email
+    $email = $user['email']; 
 
-    if ($action === 'accept') {
-        $stmt = $conn->prepare("UPDATE returns SET status = 'approved' WHERE id = ?");
-        $stmt->bind_param("i", $return_id);
-        $stmt->execute();
+    // Update status pengembalian dan tambahkan alasan penolakan
+    $stmt = $conn->prepare("UPDATE returns SET status = 'rejected', rejection_reason = ? WHERE id = ?");
+    $stmt->bind_param("si", $rejection_reason, $return_id);
+    $stmt->execute();
 
-        // Update status pesanan di konsumen menjadi 'return_approved'
-        $stmt = $conn->prepare("UPDATE orders SET status = 'return_approved' WHERE id = (SELECT order_id FROM returns WHERE id = ?)");
-        $stmt->bind_param("i", $return_id);
-        $stmt->execute();
+    // Update status pesanan di konsumen menjadi 'return_rejected'
+    $stmt = $conn->prepare("UPDATE orders SET status = 'return_rejected' WHERE id = (SELECT order_id FROM returns WHERE id = ?)");
+    $stmt->bind_param("i", $return_id);
+    $stmt->execute();
 
-        // Kirim email notifikasi ke konsumen
-        sendStatusUpdateEmail($email, 'Pengembalian Anda telah diterima');
-        
-    } elseif ($action === 'reject') {
-        $stmt = $conn->prepare("UPDATE returns SET status = 'rejected' WHERE id = ?");
-        $stmt->bind_param("i", $return_id);
-        $stmt->execute();
+    // Mengirim email dengan alasan penolakan
+    sendStatusUpdateEmail($email, 'rejected', $rejection_reason);
 
-        // Update status pesanan di konsumen menjadi 'return_rejected'
-        $stmt = $conn->prepare("UPDATE orders SET status = 'return_rejected' WHERE id = (SELECT order_id FROM returns WHERE id = ?)");
-        $stmt->bind_param("i", $return_id);
-        $stmt->execute();
-
-        // Kirim email notifikasi ke konsumen
-        sendStatusUpdateEmail($email, 'Pengembalian Anda telah ditolak');
-    }
-
-    header('Location: manage_returns.php');
+    header("Location: manage_returns.php");
     exit();
+} else {
+    $return_id = $_GET['return_id'];
 }
-
-// Mengambil daftar pengembalian dari database
-$stmt = $conn->prepare("SELECT returns.*, orders.user_id, orders.order_code, users.username FROM returns 
-                        JOIN orders ON returns.order_id = orders.id 
-                        JOIN users ON orders.user_id = users.id");
-$stmt->execute();
-$result = $stmt->get_result();
-$returns = $result->fetch_all(MYSQLI_ASSOC);
-
-// Mengambil daftar pesanan dari konsumen perorangan dari database dan mengurutkannya berdasarkan id pesanan dalam urutan menurun
-$stmt = $conn->prepare("SELECT orders.*, users.username FROM orders JOIN users ON orders.user_id = users.id WHERE users.role = 'individual' ORDER BY orders.id DESC");
-$stmt->execute();
-$result = $stmt->get_result();
-$orders = $result->fetch_all(MYSQLI_ASSOC);
 ?>
 
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Manajemen Pengembalian - Admin - Percetakan Orieska</title>
+    <title>Reject Return - Admin - Percetakan Orieska</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -224,69 +202,17 @@ th {
                 </ul>
             </div>
         </div>
-        <div class="content">
-            <h2>Pengelolaan Pengembalian</h2>
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th>ID Retur</th>
-                        <th>Order ID</th>
-                        <th>Username</th>
-                        <th><center>Alasan<center></th>
-                        <th><center>Bukti Retur<center></th>
-                        <th>Status</th>
-                        <th>Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($returns as $return): ?>
-                        <tr>
-                            <td><?= htmlspecialchars($return['retur_code']); ?></td>
-                            <td><?= htmlspecialchars($return['order_code']); ?></td>
-                            <td><?= htmlspecialchars($return['username']); ?></td>
-                            <td><?= htmlspecialchars($return['reason']); ?></td>
-                            <td><center>
-                                <?php if ($return['proof_image']): ?>
-                                    <a class="btn btn-warning btn-sm" href="../uploads/returns/<?= htmlspecialchars($return['proof_image']); ?>" target="_blank">Lihat Bukti</a>
-                                <?php else: ?>
-                                    Tidak ada bukti
-                                <?php endif; ?>
-                                <a class="btn btn-primary btn-sm" href="view_order.php?id=<?= htmlspecialchars($return['order_id']); ?>" role="button">Lihat Detail</a>
-                                <?php if ($return['status'] !== 'rejected'): ?>
-                                    <a class="btn btn-info btn-sm" href="view_return_detail.php?order_id=<?= $return['order_id']; ?>">Lihat Pengembalian</a>
-                                <?php endif; ?>
-                            </center></td>
-                            <td><?= htmlspecialchars($return['status']); ?></td>
-                            <td>
-                                <?php if ($return['status'] === 'pending'): ?>
-                                    <form method="post" action="manage_returns.php" style="display:inline;">
-                                        <input type="hidden" name="return_id" value="<?= $return['id']; ?>">
-                                        <input type="hidden" name="action" value="accept">
-                                        <button type="submit" class="btn btn-success btn-sm">Terima</button>
-                                    </form>
-                                    <form method="get" action="reject_return.php" style="display:inline;">
-                                        <input type="hidden" name="return_id" value="<?= $return['id']; ?>">
-                                        <button type="submit" class="btn btn-danger btn-sm">Tolak</button>
-                                    </form>
-                                <?php elseif ($return['status'] === 'approved'): ?>
-                                    <span class="badge bg-success">Diterima</span>
-                                <?php elseif ($return['status'] === 'rejected'): ?>
-                                    <span class="badge bg-danger">Ditolak</span>
-                                <?php elseif ($return['status'] === 'being_returned'): ?>
-                                    <form method="post" action="manage_returns.php" style="display:inline;">
-                                        <input type="hidden" name="return_id" value="<?= $return['id']; ?>">
-                                        <input type="hidden" name="action" value="received">
-                                        <button type="submit" class="btn btn-primary btn-sm">Terima Pengembalian</button>
-                                    </form>
-                                <?php elseif ($return['status'] === 'returned'): ?>
-                                    <span class="badge bg-primary">Retur Diterima</span>
-                                <?php endif; ?>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
+<body>
+    <div class="content">
+        <h2>Alasan Penolakan Pengembalian</h2>
+        <form method="post" action="reject_return.php">
+            <input type="hidden" name="return_id" value="<?= htmlspecialchars($return_id); ?>">
+            <div class="mb-3">
+                <label for="rejection_reason" class="form-label">Alasan Penolakan</label>
+                <textarea name="rejection_reason" id="rejection_reason" class="form-control" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-danger">Kirim Penolakan</button>
+        </form>
     </div>
 </body>
 </html>

@@ -4,7 +4,7 @@ use PHPMailer\PHPMailer\Exception;
 
 require '../vendor/autoload.php';
 
-function sendStatusUpdateEmail($email, $status) {
+function sendStatusUpdateEmail($email, $status, $rejection_reason = '') {
     $mail = new PHPMailer(true);
 
     try {
@@ -20,8 +20,13 @@ function sendStatusUpdateEmail($email, $status) {
         $mail->addAddress($email);
 
         $mail->isHTML(true);
-        $mail->Subject = 'Order Status Updated';
-        $mail->Body    = "Your order status has been updated to: $status";
+        $mail->Subject = 'Return Status Updated';
+        
+        if ($status === 'rejected' && !empty($rejection_reason)) {
+            $mail->Body = "Permintaan pengembalian Anda telah ditolak dengan alasan berikut: $rejection_reason";
+        } else {
+            $mail->Body = "Status pesanan Anda telah diperbarui menjadi: $status";
+        }
 
         $mail->send();
         return true;
