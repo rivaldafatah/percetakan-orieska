@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt->execute();
 
     // Gunakan URL absolut atau periksa sesi untuk mengarahkan ke halaman yang tepat
-    if ($_SESSION['role'] === 'company_user') {
+    if ($_SESSION['role'] === 'company') {
         header('Location: company_order_history.php');
     } else {
         header('Location: ocompany_order_history.php');

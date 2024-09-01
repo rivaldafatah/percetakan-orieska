@@ -170,7 +170,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_id'])) {
                             <td>
                             <a class="btn btn-info btn-sm" href="view_company_order_detail.php?id=<?= $order['order_id'] ?>">Lihat Detail</a>
                                 <?php if ($order['status'] === 'shipped'): ?>
-                                    <a class="btn btn-success btn-sm" href="complete_order.php?order_id=<?= $order['order_id'] ?>">Pesanan Selesai</a>
+                                    <a class="btn btn-success btn-sm" href="company_complete_order.php?order_id=<?= $order['order_id'] ?>">Pesanan Selesai</a>
                                     <a class="btn btn-danger btn-sm" href="company_return_request.php?order_id=<?= $order['order_id'] ?>">Ajukan Retur</a>
                                 <?php elseif ($order['status'] === 'return_pending'): ?>
                                     <span class="badge bg-warning text-dark">Retur Pending</span>
