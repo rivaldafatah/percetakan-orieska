@@ -1,5 +1,9 @@
 <?php
 session_start();
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+require '../vendor/autoload.php'; // Pastikan PHPMailer sudah diinstall dan path benar
 include '../includes/db.php';
 
 // Pastikan hanya admin yang dapat mengakses halaman ini
@@ -12,9 +16,10 @@ $order_id = $_GET['order_id'];
 
 // Mengambil detail pengiriman pengembalian dari tabel return_shipments dan status dari tabel orders
 $stmt = $conn->prepare("
-    SELECT rs.*, o.order_code, o.status AS order_status 
+    SELECT rs.*, o.order_code, o.status AS order_status, u.email, u.username 
     FROM return_shipments rs 
     JOIN orders o ON rs.order_id = o.id 
+    JOIN users u ON o.user_id = u.id 
     WHERE rs.order_id = ?
 ");
 $stmt->bind_param("i", $order_id);
@@ -47,8 +52,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     $stmt->close();
 
+    // Mengirim email notifikasi ke konsumen
+    sendStatusUpdateEmail($return_shipment['email'], $return_shipment['order_code'], 'returned');
+
     header('Location: manage_returns.php');
     exit();
+}
+
+// Fungsi untuk mengirim email notifikasi
+function sendStatusUpdateEmail($email, $order_code, $status) {
+    $mail = new PHPMailer(true);
+
+    try {
+        $mail->isSMTP();
+        $mail->Host = 'smtp.gmail.com';  
+        $mail->SMTPAuth = true;
+        $mail->Username = 'dalexganteng@gmail.com'; // Ganti dengan email Anda
+        $mail->Password = 'ayeh afnp pkeb kpoe';  // Ganti dengan password email atau app password
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port = 587;
+
+        $mail->setFrom('your-email@gmail.com', 'Percetakan Orieska');
+        $mail->addAddress($email);
+
+        $mail->isHTML(true);
+        $mail->Subject = 'Return Order Received';
+        $mail->Body    = "Dear customer, <br><br>Your return order with Order Code: <strong>$order_code</strong> has been successfully received and processed. <br><br>Status has been updated to: <strong>$status</strong>.<br><br>Thank you for your patience.<br>Percetakan Orieska.";
+
+        $mail->send();
+        return true;
+    } catch (Exception $e) {
+        return false;
+    }
 }
 ?>
 
@@ -187,6 +222,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="manage_returns.php">Pengembalian</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="company_register.php">Daftar Akun Perusahaan</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Kelola Akun Konsumen
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="manage_accounts.php">Akun Perorangan</a></li>
+                            <li><a class="dropdown-item" href="manage_company_accounts.php">Akun Perusahaan</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="manage_users.php">Kelola Semua Akun</a>
                     </li>
                 </ul>
             </div>
