@@ -59,8 +59,21 @@ $products = $result->fetch_all(MYSQLI_ASSOC);
                     <li class="nav-item">
                         <a class="nav-link" href="../layanan.php">Layanan Vendor</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="catalog.php">Katalog</a>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="katalogDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Katalog
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="katalogDropdown">
+                            <li><a class="dropdown-item" href="catalog.php">Semua Produk</a></li>
+                            <li><a class="dropdown-item" href="banner.php">Banner</a></li>
+                            <li><a class="dropdown-item" href="stiker.php">Stiker</a></li>
+                            <li><a class="dropdown-item" href="dus_kemasan.php">Dus Kemasan</a></li>
+                            <li><a class="dropdown-item" href="undangan.php">Undangan</a></li> 
+                            <li><a class="dropdown-item" href="kartu_nama.php">Kartu Nama</a></li>
+                            <li><a class="dropdown-item" href="buku.php">Buku</a></li>
+                            <li><a class="dropdown-item" href="brosur.php">Brosur</a></li>
+                            <li><a class="dropdown-item" href="map.php">Map</a></li>
+                        </ul>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="../about.php">Tentang</a>

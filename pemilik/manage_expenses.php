@@ -178,6 +178,7 @@ th {
             <th>Satuan</th>
             <th>Biaya (Rp)</th>
             <th>Tanggal Pengeluaran</th>
+            <th>Aksi</th>
         </tr>
         <?php foreach ($expenses as $expense): ?>
             <tr>
@@ -187,6 +188,9 @@ th {
                 <td><?= $expense['unit'] ?></td>
                 <td><?= number_format($expense['cost'], 2, ',', '.') ?></td>
                 <td><?= $expense['expense_date'] ?></td>
+                <td>
+                    <a class="btn btn-primary" href="print_expenses.php?expense_id=<?= $expense['id'] ?>" role="button" target="_blank">Print</a>
+                </td>
             </tr>
         <?php endforeach; ?>
     </table>
