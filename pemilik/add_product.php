@@ -22,6 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $min_order = $_POST['min_order'];
     $company = $_POST['company']; 
     $image = $_FILES['image']['name'];
+    $category = $_POST['category'];
 
     // Hapus semua titik sebelum mengkonversi ke float
     $price = str_replace('.', '', $_POST['price']); // Menghapus titik
@@ -34,11 +35,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     move_uploaded_file($_FILES['image']['tmp_name'], $target_file);
 
     // Insert product into database
-    $stmt = $conn->prepare("INSERT INTO products (name, description, price, estimasi_pengerjaan, min_order, image, company) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    $stmt = $conn->prepare("INSERT INTO products (name, description, price, estimasi_pengerjaan, min_order, image, company, category) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
     if ($stmt === false) {
         die("Error preparing statement: " . htmlspecialchars($conn->error));
     }
-    $stmt->bind_param("ssdsdsi", $name, $description, $price, $estimasi_pengerjaan, $min_order, $image, $company);
+    $stmt->bind_param("ssdsdsss", $name, $description, $price, $estimasi_pengerjaan, $min_order, $image, $company, $category);
     $stmt->execute();
 
     // Ambil ID produk yang baru saja dimasukkan
@@ -226,6 +227,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="mb-3">
                 <label class="form-label">Harga:</label>
                 <input type="text" class="form-control" name="price" oninput="formatNumber(this)" required>
+            </div>
+            <!-- Tambah Kategori Produk -->
+            <div class="mb-3">
+                <label class="form-label">Kategori Produk:</label>
+                <select class="form-select" name="category" required>
+                    <option value="banner">Banner</option>
+                    <option value="stiker">Stiker</option>
+                    <option value="dus_kemasan">Dus Kemasan</option>
+                    <option value="undangan">Undangan</option>
+                    <option value="kartu_nama">Kartu Nama</option>
+                    <option value="buku">Buku</option>
+                    <option value="brosur">Brosur</option>
+                    <option value="map">Map</option>
+                </select>
             </div>
             <div class="mb-3">
                 <label class="form-label">Estimasi Pengerjaan:</label>

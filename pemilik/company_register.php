@@ -8,7 +8,7 @@ include '../includes/db.php';
 
 $success = "";
 
-function sendVerificationEmail($email, $verificationCode) {
+function sendVerificationEmail($email, $verificationCode, $username, $plainPassword) {
     $mail = new PHPMailer(true);
 
     try {
@@ -27,8 +27,16 @@ function sendVerificationEmail($email, $verificationCode) {
 
         // Content
         $mail->isHTML(true);
-        $mail->Subject = 'Verifikasi Email Perusahaan';
-        $mail->Body    = "Klik link di bawah ini untuk memverifikasi email perusahaan Anda:<br><a href='http://localhost/percetakan-orieska/consumer/verify.php?code=$verificationCode'>Verifikasi Email</a>";
+        $mail->Subject = 'Verifikasi Email Perusahaan dan Informasi Akun';
+        $mail->Body    = "
+            <p>Terima kasih telah mendaftar akun perusahaan di Percetakan Orieska.</p>
+            <p>Berikut adalah informasi akun Anda:</p>
+            <ul>
+                <li>Username: <strong>$username</strong></li>
+                <li>Password: <strong>$plainPassword</strong></li>
+            </ul>
+            <p>Klik link di bawah ini untuk memverifikasi email perusahaan Anda:<br>
+            <a href='http://localhost/percetakan-orieska/consumer/verify.php?code=$verificationCode'>Verifikasi Email</a></p>";
 
         $mail->send();
         return true;
@@ -37,9 +45,11 @@ function sendVerificationEmail($email, $verificationCode) {
     }
 }
 
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = $_POST['username'];
-    $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
+    $plainPassword = $_POST['password'];  // Simpan password plaintext sementara
+    $password = password_hash($plainPassword, PASSWORD_DEFAULT);
     $email = $_POST['email'];
     $verificationCode = md5(uniqid(rand(), true));
 
@@ -65,12 +75,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt->bind_param("si", $user_code, $user_id);
     $stmt->execute();
 
-    if (sendVerificationEmail($email, $verificationCode)) {
+    // Send verification email with username and plaintext password
+    if (sendVerificationEmail($email, $verificationCode, $username, $plainPassword)) {
         $success = "Akun perusahaan berhasil dibuat. Silakan hubungi pihak perusahaan untuk verifikasi.";
     } else {
         $error = "Gagal mengirim email verifikasi.";
     }
 }
+
 ?>
 
 <!DOCTYPE html>

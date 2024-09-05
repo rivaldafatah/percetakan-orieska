@@ -62,15 +62,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             Katalog
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="katalogDropdown">
-                            <li><a class="dropdown-item" href="#">Banner</a></li>
-                            <li><a class="dropdown-item" href="#">Buku</a></li>
-                            <li><a class="dropdown-item" href="#">Plakat</a></li>
-                            <li><a class="dropdown-item" href="#">Stiker</a></li>
-                            <li><a class="dropdown-item" href="#">Kartu Nama</a></li>
+                            <li><a class="dropdown-item" href="consumer/catalog.php">Semua Produk</a></li>
+                            <li><a class="dropdown-item" href="consumer/banner.php">Banner</a></li>
+                            <li><a class="dropdown-item" href="consumer/stiker.php">Stiker</a></li>
+                            <li><a class="dropdown-item" href="consumer/dus_kemasan.php">Dus Kemasan</a></li>
+                            <li><a class="dropdown-item" href="consumer/undangan.php">Undangan</a></li> 
+                            <li><a class="dropdown-item" href="consumer/kartu_nama.php">Kartu Nama</a></li>
+                            <li><a class="dropdown-item" href="consumer/buku.php">Buku</a></li>
+                            <li><a class="dropdown-item" href="consumer/brosur.php">Brosur</a></li>
+                            <li><a class="dropdown-item" href="consumer/map.php">Map</a></li>
                         </ul>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">Tentang</a>
+                        <a class="nav-link" href="about.php">Tentang</a>
                     </li>
                 </ul>
                 <ul class="navbar-nav mb-2 mb-lg-0">

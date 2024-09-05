@@ -36,33 +36,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         die("Error: No payment proof uploaded.");
     }
 
-    // Looping setiap item di dalam keranjang dan membuat pesanan terpisah untuk masing-masing item
+    // Menyimpan data pesanan ke database
+    $total = 0;
     foreach ($cart as $item) {
-        $total = $item['price'] * $item['quantity'];
+        $total += $item['price'] * $item['quantity'];
+    }
 
-        // Insert order baru tanpa kode
-        $stmt = $conn->prepare("INSERT INTO orders (user_id, address, shipping_method, payment_method, total, status, payment_proof) VALUES (?, ?, ?, ?, ?, 'pending', ?)");
-        if ($stmt === false) {
-            die("Error preparing statement: " . htmlspecialchars($conn->error));
-        }
-        
-        $stmt->bind_param("isssds", $user_id, $address, $shipping_method, $payment_method, $total, $payment_proof);
-        $stmt->execute();
-        $order_id = $stmt->insert_id;
+    // Insert order baru tanpa kode
+    $stmt = $conn->prepare("INSERT INTO orders (user_id, address, shipping_method, payment_method, total, status, payment_proof) VALUES (?, ?, ?, ?, ?, 'pending', ?)");
+    if ($stmt === false) {
+        die("Error preparing statement: " . htmlspecialchars($conn->error));
+    }
+    
+    $stmt->bind_param("isssds", $user_id, $address, $shipping_method, $payment_method, $total, $payment_proof);
+    $stmt->execute();
+    $order_id = $stmt->insert_id;
 
-        // Generate kode order dengan format ORD-00001, masing-masing item punya kode pesanan yang berbeda
-        $order_code = 'ORD-' . str_pad($order_id, 5, '0', STR_PAD_LEFT);
+    // Generate kode order dengan format ORD-00001
+    $order_code = 'ORD-' . str_pad($order_id, 5, '0', STR_PAD_LEFT);
 
-        // Update order dengan kode order
-        $stmt = $conn->prepare("UPDATE orders SET order_code = ? WHERE id = ?");
-        if ($stmt === false) {
-            die("Error preparing statement: " . htmlspecialchars($conn->error));
-        }
-        $stmt->bind_param("si", $order_code, $order_id);
-        $stmt->execute();
+    // Update order dengan kode order
+    $stmt = $conn->prepare("UPDATE orders SET order_code = ? WHERE id = ?");
+    if ($stmt === false) {
+        die("Error preparing statement: " . htmlspecialchars($conn->error));
+    }
+    $stmt->bind_param("si", $order_code, $order_id);
+    $stmt->execute();
 
-        // Insert detail pesanan untuk produk ini
-        $design_file = isset($item['design_file']) ? $item['design_file'] : ''; // Handle jika tidak ada file desain
+    // Menyimpan detail pesanan ke database
+    foreach ($cart as $item) {
+        $design_file = $item['design_file']; // Assuming `design_file` is part of the cart item
         $stmt = $conn->prepare("INSERT INTO order_items (order_id, product_id, quantity, price, design_file) VALUES (?, ?, ?, ?, ?)");
         if ($stmt === false) {
             die("Error preparing statement for order items: " . htmlspecialchars($conn->error));
@@ -71,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute();
     }
 
-    // Mengosongkan keranjang belanja setelah selesai checkout
+    // Mengosongkan keranjang belanja
     unset($_SESSION['cart']);
 
     header('Location: order_success.php');
@@ -118,21 +121,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <li class="nav-item">
                         <a class="nav-link" href="../layanan.php">Layanan Vendor</a>
                     </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="katalogDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            Katalog
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="katalogDropdown">
-                            <li><a class="dropdown-item" href="catalog.php">Semua Produk</a></li>
-                            <li><a class="dropdown-item" href="banner.php">Banner</a></li>
-                            <li><a class="dropdown-item" href="stiker.php">Stiker</a></li>
-                            <li><a class="dropdown-item" href="dus_kemasan.php">Dus Kemasan</a></li>
-                            <li><a class="dropdown-item" href="undangan.php">Undangan</a></li> 
-                            <li><a class="dropdown-item" href="kartu_nama.php">Kartu Nama</a></li>
-                            <li><a class="dropdown-item" href="buku.php">Buku</a></li>
-                            <li><a class="dropdown-item" href="brosur.php">Brosur</a></li>
-                            <li><a class="dropdown-item" href="map.php">Map</a></li>
-                        </ul>
+                    <li class="nav-item">
+                        <a class="nav-link" href="catalog.php">Katalog</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="../about.php">Tentang</a>

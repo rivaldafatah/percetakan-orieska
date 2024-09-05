@@ -48,8 +48,21 @@ foreach ($cart as $item) {
                     <li class="nav-item">
                         <a class="nav-link" href="../layanan.php">Layanan Vendor</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="company_catalog.php">Katalog</a>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="katalogDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Katalog
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="katalogDropdown">
+                            <li><a class="dropdown-item" href="company_catalog.php">Semua Produk</a></li>
+                            <li><a class="dropdown-item" href="company_banner.php">Banner</a></li>
+                            <li><a class="dropdown-item" href="company_stiker.php">Stiker</a></li>
+                            <li><a class="dropdown-item" href="company_dus_kemasan.php">Dus Kemasan</a></li>
+                            <li><a class="dropdown-item" href="company_undangan.php">Undangan</a></li> 
+                            <li><a class="dropdown-item" href="company_kartu_nama.php">Kartu Nama</a></li>
+                            <li><a class="dropdown-item" href="company_buku.php">Buku</a></li>
+                            <li><a class="dropdown-item" href="companybrosur.php">Brosur</a></li>
+                            <li><a class="dropdown-item" href="company_map.php">Map</a></li>
+                        </ul>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="../about.php">Tentang</a>

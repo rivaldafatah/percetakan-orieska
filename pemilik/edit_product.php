@@ -44,6 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $min_order = $_POST['min_order'];
     $company = $_POST['company']; // Tambahkan ini
     $image = $_FILES['image']['name'];
+    $category = $_POST['category'];
 
     if ($image) {
         $target_dir = "../uploads/products/";
@@ -53,8 +54,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $image = $product['image'];
     }
 
-    $stmt = $conn->prepare("UPDATE products SET name = ?, description = ?, price = ?, estimasi_pengerjaan = ?, min_order = ?, image = ?, company = ? WHERE id = ?");
-    $stmt->bind_param("ssdsisii", $name, $description, $price, $estimasi_pengerjaan, $min_order, $image, $company, $id);
+    $stmt = $conn->prepare("UPDATE products SET name = ?, description = ?, price = ?, estimasi_pengerjaan = ?, min_order = ?, image = ?, company = ?, category = ? WHERE id = ?");
+    $stmt->bind_param("ssdsisssi", $name, $description, $price, $estimasi_pengerjaan, $min_order, $image, $company, $category, $id);
     $stmt->execute();
 
     // Menghapus bahan lama yang terkait dengan produk
@@ -217,6 +218,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="mb-3">
                 <label class="form-label">Harga:</label>
                 <input type="text" name="price" class="form-control" value="<?= number_format($product['price'], 0, '', '.') ?>" oninput="formatNumber(this)" required>
+            </div>
+            <!-- Tambah Kategori Produk -->
+            <div class="mb-3">
+                <label class="form-label">Kategori Produk:</label>
+                <select class="form-select" name="category" required>
+                    <option value="banner" <?= $product['category'] == 'banner' ? 'selected' : '' ?>>Banner</option>
+                    <option value="stiker" <?= $product['category'] == 'stiker' ? 'selected' : '' ?>>Stiker</option>
+                    <option value="dus_kemasan" <?= $product['category'] == 'dus_kemasan' ? 'selected' : '' ?>>Dus Kemasan</option>
+                    <option value="undangan" <?= $product['category'] == 'undangan' ? 'selected' : '' ?>>Undangan</option>
+                    <option value="kartu_nama" <?= $product['category'] == 'kartu_nama' ? 'selected' : '' ?>>Kartu Nama</option>
+                    <option value="buku" <?= $product['category'] == 'buku' ? 'selected' : '' ?>>Buku</option>
+                    <option value="brosur" <?= $product['category'] == 'brosur' ? 'selected' : '' ?>>Brosur</option>
+                    <option value="map" <?= $product['category'] == 'map' ? 'selected' : '' ?>>Map</option>
+                </select>
             </div>
             <div class="mb-3">
                 <label class="form-label">Estimasi Pengerjaan:</label>
